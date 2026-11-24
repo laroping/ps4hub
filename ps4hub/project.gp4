@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<psproject xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fmt="gp4" version="1000">
+	<volume>
+		<volume_type>pkg_ps4_app</volume_type>
+		<volume_id>PS4VOLUME</volume_id>
+		<volume_ts>2026-11-23 04:55:43</volume_ts>
+		<package content_id="IV0000-CPAN00001_00-CONTROLPANEL0000" passcode="00000000000000000000000000000000"
+			storage_type="digital50" app_type="full" />
+		<chunk_info chunk_count="1" scenario_count="1">
+			<chunks>
+				<chunk id="0" layer_no="0" label="Chunk #0" />
+			</chunks>
+			<scenarios default_id="0">
+				<scenario id="0" type="sp" initial_chunk_count="1" label="Scenario #0">0</scenario>
+			</scenarios>
+		</chunk_info>
+	</volume>
+	<files img_no="0">
+		<file targ_path="eboot.bin" orig_path="eboot.bin" />
+		<file targ_path="sce_sys/about/right.sprx" orig_path="sce_sys/about/right.sprx" />
+		<file targ_path="sce_sys/param.sfo" orig_path="sce_sys/param.sfo" />
+		<file targ_path="sce_sys/icon0.png" orig_path="sce_sys/icon0.png" />
+		<file targ_path="sce_sys/manual/manual.xml" orig_path="sce_sys/manual/manual.xml" />
+		<file targ_path="sce_sys/manual/contents.html" orig_path="sce_sys/manual/contents.html" />
+		<file targ_path="sce_module/libSceFios2.prx" orig_path="sce_module/libSceFios2.prx" />
+		<file targ_path="sce_module/libc.prx" orig_path="sce_module/libc.prx" />
+		<file targ_path="assets/fonts/Roboto-Medium.ttf" orig_path="assets/fonts/Roboto-Medium.ttf" />
+		<file targ_path="assets/PS4Webkit.png" orig_path="assets/PS4Webkit.png" />
+		<file targ_path="assets/autoloader/index.html" orig_path="assets/autoloader/index.html" />
+		<file targ_path="assets/autoloader/style.css" orig_path="assets/autoloader/style.css" />
+		<file targ_path="assets/autoloader/goldhen_2.4b18.14.bin" orig_path="assets/autoloader/goldhen_2.4b18.14.bin" />
+		<file targ_path="assets/autoloader/img.jpg" orig_path="assets/autoloader/img.jpg" />
+		<file targ_path="assets/autoloader/cache505.html" orig_path="assets/autoloader/cache505.html" />
+		<file targ_path="assets/autoloader/cache700.html" orig_path="assets/autoloader/cache700.html" />
+		<file targ_path="assets/autoloader/cache900.html" orig_path="assets/autoloader/cache900.html" />
+		<file targ_path="assets/autoloader/cachecss.html" orig_path="assets/autoloader/cachecss.html" />
+		<file targ_path="assets/autoloader/cacheslopkit.html" orig_path="assets/autoloader/cacheslopkit.html" />
+		<file targ_path="assets/autoloader/505.manifest" orig_path="assets/autoloader/505.manifest" />
+		<file targ_path="assets/autoloader/700.manifest" orig_path="assets/autoloader/700.manifest" />
+		<file targ_path="assets/autoloader/900.manifest" orig_path="assets/autoloader/900.manifest" />
+		<file targ_path="assets/autoloader/css.manifest" orig_path="assets/autoloader/css.manifest" />
+		<file targ_path="assets/autoloader/slopkit.manifest" orig_path="assets/autoloader/slopkit.manifest" />
+		<file targ_path="assets/autoloader/505/exploit.js" orig_path="assets/autoloader/505/exploit.js" />
+		<file targ_path="assets/autoloader/700/alert.js" orig_path="assets/autoloader/700/alert.js" />
+		<file targ_path="assets/autoloader/700/config.js" orig_path="assets/autoloader/700/config.js" />
+		<file targ_path="assets/autoloader/700/lapse.js" orig_path="assets/autoloader/700/lapse.js" />
+		<file targ_path="assets/autoloader/700/psfree.js" orig_path="assets/autoloader/700/psfree.js" />
+		<file targ_path="assets/autoloader/700/send.js" orig_path="assets/autoloader/700/send.js" />
+		<file targ_path="assets/autoloader/700/kpatch/700.elf" orig_path="assets/autoloader/700/kpatch/700.elf" />
+		<file targ_path="assets/autoloader/700/kpatch/750.elf" orig_path="assets/autoloader/700/kpatch/750.elf" />
+		<file targ_path="assets/autoloader/700/kpatch/800.elf" orig_path="assets/autoloader/700/kpatch/800.elf" />
+		<file targ_path="assets/autoloader/700/kpatch/850.elf" orig_path="assets/autoloader/700/kpatch/850.elf" />
+		<file targ_path="assets/autoloader/700/lapse/700.js" orig_path="assets/autoloader/700/lapse/700.js" />
+		<file targ_path="assets/autoloader/700/lapse/750.js" orig_path="assets/autoloader/700/lapse/750.js" />
+		<file targ_path="assets/autoloader/700/lapse/751.js" orig_path="assets/autoloader/700/lapse/751.js" />
+		<file targ_path="assets/autoloader/700/lapse/800.js" orig_path="assets/autoloader/700/lapse/800.js" />
+		<file targ_path="assets/autoloader/700/lapse/850.js" orig_path="assets/autoloader/700/lapse/850.js" />
+		<file targ_path="assets/autoloader/700/lapse/852.js" orig_path="assets/autoloader/700/lapse/852.js" />
+		<file targ_path="assets/autoloader/700/module/chain.js" orig_path="assets/autoloader/700/module/chain.js" />
+		<file targ_path="assets/autoloader/700/module/int64.js" orig_path="assets/autoloader/700/module/int64.js" />
+		<file targ_path="assets/autoloader/700/module/mem.js" orig_path="assets/autoloader/700/module/mem.js" />
+		<file targ_path="assets/autoloader/700/module/memtools.js" orig_path="assets/autoloader/700/module/memtools.js" />
+		<file targ_path="assets/autoloader/700/module/offset.js" orig_path="assets/autoloader/700/module/offset.js" />
+		<file targ_path="assets/autoloader/700/module/rw.js" orig_path="assets/autoloader/700/module/rw.js" />
+		<file targ_path="assets/autoloader/700/module/utils.js" orig_path="assets/autoloader/700/module/utils.js" />
+		<file targ_path="assets/autoloader/700/module/view.js" orig_path="assets/autoloader/700/module/view.js" />
+		<file targ_path="assets/autoloader/700/rop/700.js" orig_path="assets/autoloader/700/rop/700.js" />
+		<file targ_path="assets/autoloader/700/rop/750.js" orig_path="assets/autoloader/700/rop/750.js" />
+		<file targ_path="assets/autoloader/700/rop/800.js" orig_path="assets/autoloader/700/rop/800.js" />
+		<file targ_path="assets/autoloader/700/rop/850.js" orig_path="assets/autoloader/700/rop/850.js" />
+		<file targ_path="assets/autoloader/900/alert.js" orig_path="assets/autoloader/900/alert.js" />
+		<file targ_path="assets/autoloader/900/config.js" orig_path="assets/autoloader/900/config.js" />
+		<file targ_path="assets/autoloader/900/lapse.js" orig_path="assets/autoloader/900/lapse.js" />
+		<file targ_path="assets/autoloader/900/psfree.js" orig_path="assets/autoloader/900/psfree.js" />
+		<file targ_path="assets/autoloader/900/send.js" orig_path="assets/autoloader/900/send.js" />
+		<file targ_path="assets/autoloader/900/kpatch/900.elf" orig_path="assets/autoloader/900/kpatch/900.elf" />
+		<file targ_path="assets/autoloader/900/kpatch/903.elf" orig_path="assets/autoloader/900/kpatch/903.elf" />
+		<file targ_path="assets/autoloader/900/kpatch/950.elf" orig_path="assets/autoloader/900/kpatch/950.elf" />
+		<file targ_path="assets/autoloader/900/lapse/900.js" orig_path="assets/autoloader/900/lapse/900.js" />
+		<file targ_path="assets/autoloader/900/lapse/903.js" orig_path="assets/autoloader/900/lapse/903.js" />
+		<file targ_path="assets/autoloader/900/lapse/950.js" orig_path="assets/autoloader/900/lapse/950.js" />
+		<file targ_path="assets/autoloader/900/module/chain.js" orig_path="assets/autoloader/900/module/chain.js" />
+		<file targ_path="assets/autoloader/900/module/constants.js" orig_path="assets/autoloader/900/module/constants.js" />
+		<file targ_path="assets/autoloader/900/module/int64.js" orig_path="assets/autoloader/900/module/int64.js" />
+		<file targ_path="assets/autoloader/900/module/mem.js" orig_path="assets/autoloader/900/module/mem.js" />
+		<file targ_path="assets/autoloader/900/module/memtools.js" orig_path="assets/autoloader/900/module/memtools.js" />
+		<file targ_path="assets/autoloader/900/module/offset.js" orig_path="assets/autoloader/900/module/offset.js" />
+		<file targ_path="assets/autoloader/900/module/rw.js" orig_path="assets/autoloader/900/module/rw.js" />
+		<file targ_path="assets/autoloader/900/module/utils.js" orig_path="assets/autoloader/900/module/utils.js" />
+		<file targ_path="assets/autoloader/900/module/view.js" orig_path="assets/autoloader/900/module/view.js" />
+		<file targ_path="assets/autoloader/900/rop/900.js" orig_path="assets/autoloader/900/rop/900.js" />
+		<file targ_path="assets/autoloader/900/rop/950.js" orig_path="assets/autoloader/900/rop/950.js" />
+		<file targ_path="assets/autoloader/css/lapse.js" orig_path="assets/autoloader/css/lapse.js" />
+		<file targ_path="assets/autoloader/css/loader.js" orig_path="assets/autoloader/css/loader.js" />
+		<file targ_path="assets/autoloader/css/main.js" orig_path="assets/autoloader/css/main.js" />
+		<file targ_path="assets/autoloader/css/misc.js" orig_path="assets/autoloader/css/misc.js" />
+		<file targ_path="assets/autoloader/css/worker.js" orig_path="assets/autoloader/css/worker.js" />
+		<file targ_path="assets/autoloader/css/workers.js" orig_path="assets/autoloader/css/workers.js" />
+		<file targ_path="assets/autoloader/css/ps4/constants.js" orig_path="assets/autoloader/css/ps4/constants.js" />
+		<file targ_path="assets/autoloader/css/ps4/kernel.js" orig_path="assets/autoloader/css/ps4/kernel.js" />
+		<file targ_path="assets/autoloader/css/ps4/userland.js" orig_path="assets/autoloader/css/ps4/userland.js" />
+		<file targ_path="assets/autoloader/css/ps4/patches/1000.bin" orig_path="assets/autoloader/css/ps4/patches/1000.bin" />
+		<file targ_path="assets/autoloader/css/ps4/patches/1050.bin" orig_path="assets/autoloader/css/ps4/patches/1050.bin" />
+		<file targ_path="assets/autoloader/css/ps4/patches/1100.bin" orig_path="assets/autoloader/css/ps4/patches/1100.bin" />
+		<file targ_path="assets/autoloader/css/ps4/patches/1102.bin" orig_path="assets/autoloader/css/ps4/patches/1102.bin" />
+		<file targ_path="assets/autoloader/slopkit/afterglow.js" orig_path="assets/autoloader/slopkit/afterglow.js" />
+		<file targ_path="assets/autoloader/slopkit/chain_lapse.js" orig_path="assets/autoloader/slopkit/chain_lapse.js" />
+		<file targ_path="assets/autoloader/slopkit/core.js" orig_path="assets/autoloader/slopkit/core.js" />
+		<file targ_path="assets/autoloader/slopkit/int64.js" orig_path="assets/autoloader/slopkit/int64.js" />
+		<file targ_path="assets/autoloader/slopkit/jb.js" orig_path="assets/autoloader/slopkit/jb.js" />
+		<file targ_path="assets/autoloader/slopkit/mem.js" orig_path="assets/autoloader/slopkit/mem.js" />
+		<file targ_path="assets/autoloader/slopkit/ps4_offsets.js" orig_path="assets/autoloader/slopkit/ps4_offsets.js" />
+		<file targ_path="assets/autoloader/slopkit/rpc_worker.js" orig_path="assets/autoloader/slopkit/rpc_worker.js" />
+		<file targ_path="assets/autoloader/slopkit/patches/1150.bin" orig_path="assets/autoloader/slopkit/patches/1150.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1200.bin" orig_path="assets/autoloader/slopkit/patches/1200.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1202.bin" orig_path="assets/autoloader/slopkit/patches/1202.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1250.bin" orig_path="assets/autoloader/slopkit/patches/1250.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1252.bin" orig_path="assets/autoloader/slopkit/patches/1252.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1300.bin" orig_path="assets/autoloader/slopkit/patches/1300.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1302.bin" orig_path="assets/autoloader/slopkit/patches/1302.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1304.bin" orig_path="assets/autoloader/slopkit/patches/1304.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1350.bin" orig_path="assets/autoloader/slopkit/patches/1350.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1352.bin" orig_path="assets/autoloader/slopkit/patches/1352.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1400.bin" orig_path="assets/autoloader/slopkit/patches/1400.bin" />
+		<file targ_path="assets/autoloader/slopkit/patches/1402.bin" orig_path="assets/autoloader/slopkit/patches/1402.bin" />
+	</files>
+	<rootdir>
+		<dir targ_name="sce_sys">
+			<dir targ_name="about" />
+			<dir targ_name="manual" />
+		</dir>
+		<dir targ_name="sce_module" />
+		<dir targ_name="assets">
+			<dir targ_name="audio" />
+			<dir targ_name="fonts" />
+			<dir targ_name="images" />
+			<dir targ_name="misc" />
+			<dir targ_name="videos" />
+			<dir targ_name="autoloader">
+				<dir targ_name="505" />
+				<dir targ_name="700">
+					<dir targ_name="kpatch" />
+					<dir targ_name="lapse" />
+					<dir targ_name="module" />
+					<dir targ_name="rop" />
+				</dir>
+				<dir targ_name="900">
+					<dir targ_name="kpatch" />
+					<dir targ_name="lapse" />
+					<dir targ_name="module" />
+					<dir targ_name="rop" />
+				</dir>
+				<dir targ_name="css">
+					<dir targ_name="ps4">
+						<dir targ_name="patches" />
+					</dir>
+				</dir>
+				<dir targ_name="slopkit">
+					<dir targ_name="patches" />
+				</dir>
+			</dir>
+		</dir>
+	</rootdir>
+</psproject>

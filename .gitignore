@@ -1,0 +1,32 @@
+# Build outputs and temporary files
+build/
+target/
+*.o
+*.obj
+*.oelf
+ps4hub/*.elf
+ps4hub/*.pkg
+ps4-package-sender/*.exe
+eboot.bin
+__pycache__/
+*.pyc
+
+# Keep runtime autoloader patches and prebuilt releases
+!ps4hub/assets/
+!ps4hub/assets/**/*.elf
+!releases/
+!releases/*.pkg
+!releases/*.exe
+
+# Toolchains & environments
+.toolchain/
+.cargo/
+Cargo.lock.backup
+
+# Operating System & IDE files
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+.vscode/
+.idea/

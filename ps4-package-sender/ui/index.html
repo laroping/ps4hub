@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PS4 Package Sender</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="accent-blue glass-light">
+  <div class="bg"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span><div class="grain"></div></div>
+
+  <div class="app">
+    <header class="titlebar" data-tauri-drag-region>
+      <div class="tb-left" data-tauri-drag-region><img src="icon.png" alt="" /></div>
+      <div class="tb-title" data-tauri-drag-region>PS4 Package Sender</div>
+      <div class="tb-win">
+        <button id="win-min" data-i18n-title="minimize"><svg viewBox="0 0 14 14"><path d="M2 7h10" stroke="currentColor" stroke-width="1.2"/></svg></button>
+        <button id="win-max" data-i18n-title="maximize"><svg viewBox="0 0 14 14"><rect x="2.5" y="2.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+        <button id="win-close" class="close" data-i18n-title="close"><svg viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      </div>
+    </header>
+
+    <nav class="nav" data-tauri-drag-region>
+      <div class="tabs" id="tabs">
+        <div class="tab-ink" id="tab-ink"></div>
+        <button class="tab active" data-view="processing" data-i18n="tab.processing">Processing Center</button>
+        <button class="tab" data-view="server" data-i18n="tab.server">Server</button>
+        <button class="tab" data-view="config" data-i18n="tab.config">Config</button>
+        <button class="tab" id="tab-miscs" data-menu="menu-miscs"><span data-i18n="tab.miscs">Miscs</span><svg class="chev" viewBox="0 0 12 12"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button>
+        <button class="tab" data-view="settings" data-i18n="tab.settings">Settings</button>
+      </div>
+      <div class="nav-right">
+        <div class="pill" id="srv-pill"><span id="srv-pill-txt">Server</span><span class="speed" id="srv-speed"></span></div>
+        <button class="icon-btn" id="btn-refresh" data-i18n-title="rescan"><svg data-icon="refresh"></svg></button>
+        <button class="icon-btn" id="btn-logs" data-i18n-title="activity"><svg data-icon="layers"></svg></button>
+        <button class="icon-btn" id="btn-power" data-i18n-title="quit"><svg data-icon="power"></svg></button>
+      </div>
+    </nav>
+
+    <div class="banner hidden" id="port-banner">
+      <svg data-icon="alert" style="width:18px;height:18px;flex-shrink:0"></svg>
+      <span class="grow" id="port-banner-txt"></span>
+      <button class="btn small danger" id="btn-kill-owner"></button>
+      <button class="btn small" id="btn-next-port" data-i18n="banner.nextPort">Use next free port</button>
+      <button class="btn small" id="btn-retry-port" data-i18n="banner.retry">Retry</button>
+    </div>
+
+    <main class="views">
+      <section class="view active" id="view-processing">
+        <div class="toolbar">
+          <button class="btn" data-menu="menu-reset"><svg data-icon="rotate"></svg><span data-i18n="pc.reset">Reset Options</span><svg class="chev" data-icon="chev"></svg></button>
+          <button class="btn" data-menu="menu-check"><svg data-icon="check"></svg><span data-i18n="pc.check">Check Options</span><svg class="chev" data-icon="chev"></svg></button>
+          <button class="btn toggle" id="btn-scanner"><span data-i18n="pc.scanner">Queue Scanner</span></button>
+          <button class="btn" id="btn-autostart"><svg data-icon="play"></svg><span data-i18n="pc.autostart">Autostart</span></button>
+          <span class="hint" id="pc-summary"></span>
+          <div class="spacer"></div>
+          <div class="search"><svg data-icon="search"></svg><input type="text" id="q-search" data-i18n-ph="search" placeholder="Search" /></div>
+        </div>
+        <div class="table">
+          <div class="thead grid-q">
+            <label class="check plain"><input type="checkbox" id="q-all" /></label>
+            <div data-i18n="col.name">Name</div>
+            <div data-i18n="col.task">Task</div>
+            <div data-i18n="col.rest">Rest</div>
+            <div data-i18n="col.status">Status</div>
+            <div class="r" data-i18n="col.size">Size</div>
+            <div data-i18n="col.progress">Progress</div>
+            <div class="r" data-i18n="col.operation">Operation</div>
+          </div>
+          <div class="tbody" id="q-body"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-server">
+        <div class="toolbar seg" id="lib-seg">
+          <button class="btn active" data-src="base"><span data-i18n="srv.base">Base Files</span><span class="count" id="cnt-base">0</span></button>
+          <button class="btn" data-src="dragged"><span data-i18n="srv.dragged">Dragged Files</span><span class="count" id="cnt-dragged">0</span></button>
+          <button class="btn" disabled data-i18n="srv.hosts">Files from Hosts - coming soon</button>
+        </div>
+        <div class="toolbar">
+          <button class="btn danger" id="btn-remove-all"><svg data-icon="trash"></svg><span data-i18n="srv.removeAll">Remove all files</span></button>
+          <button class="btn" id="btn-add-all"><svg data-icon="plus"></svg><span data-i18n="srv.addAll">Add all to Queue</span></button>
+          <button class="btn" id="btn-add-files"><svg data-icon="file"></svg><span data-i18n="srv.addFiles">Add files...</span></button>
+          <button class="btn" id="btn-rescan"><svg data-icon="refresh"></svg><span data-i18n="srv.rescan">Rescan</span></button>
+          <div class="spacer"></div>
+          <div class="search"><svg data-icon="search"></svg><input type="text" id="lib-search" data-i18n-ph="search" placeholder="Search" /></div>
+        </div>
+        <div class="table">
+          <div class="thead grid-lib">
+            <div data-i18n="col.name">Name</div>
+            <div data-i18n="col.titleId">Title ID</div>
+            <div data-i18n="col.status">Status</div>
+            <div class="r" data-i18n="col.size">Size</div>
+            <div class="r" data-i18n="col.operation">Operation</div>
+          </div>
+          <div class="tbody" id="lib-body"></div>
+        </div>
+      </section>
+
+      <section class="view scroll" id="view-config">
+        <div class="form">
+          <div class="section" data-i18n="cfg.local">Local Server Configuration</div>
+          <div class="grid4">
+            <label data-i18n="cfg.serverIp">Server IP</label>
+            <select id="cfg-server_ip" data-cfg="server_ip"></select>
+            <div class="cell"><label data-i18n="cfg.port">Port</label></div>
+            <input type="number" class="w178" min="1" max="65535" data-cfg="server_port" data-num />
+            <div class="cell"><button class="btn" id="btn-open-server" style="width:96px;justify-content:center"><svg data-icon="server"></svg>Server</button></div>
+
+            <label data-i18n="cfg.serverApp">Server App</label>
+            <select disabled><option>built-in (Rust)</option></select>
+            <div class="cell"><label data-i18n="cfg.status">Status</label></div>
+            <div><span class="tagline" id="srv-status-tag">stopped</span></div>
+            <div class="cell"><button class="btn" id="btn-srv-restart" data-i18n-title="restart" style="width:44px;justify-content:center;padding:0"><svg data-icon="refresh"></svg></button><button class="btn" id="btn-srv-toggle" style="width:44px;justify-content:center;padding:0"><svg data-icon="power"></svg></button></div>
+          </div>
+          <div class="frow" style="margin-top:6px"><span></span><span class="hint" id="srv-hint"></span></div>
+
+          <div class="section right" data-i18n="cfg.location">Location</div>
+          <div class="frow">
+            <label data-i18n="cfg.basePath">PKG Base Path</label>
+            <div class="joined">
+              <input type="text" id="base-path" readonly data-i18n-ph="cfg.basePathPh" placeholder="Select your base path of your PKG's" />
+              <button class="btn" id="btn-manual"><svg data-icon="edit"></svg><span data-i18n="cfg.manual">Enter manually</span></button>
+              <button class="btn" id="btn-pick"><svg data-icon="folder"></svg><span data-i18n="cfg.choose">Click here to Choose the Path</span></button>
+            </div>
+          </div>
+          <div class="frow">
+            <label data-i18n="cfg.autoScan">Auto scan</label>
+            <label class="check"><input type="checkbox" data-cfg="auto_scan" id="cfg-auto_scan" /><span data-i18n="cfg.autoScanD">Auto scan base path on Startup</span></label>
+          </div>
+          <div class="frow">
+            <label data-i18n="cfg.deepScan">Deepscan</label>
+            <label class="check"><input type="checkbox" data-cfg="deep_scan" /><span data-i18n="cfg.deepScanD">Scan sub directories for pkg files</span></label>
+          </div>
+
+          <div class="section right" data-i18n="cfg.features">Features</div>
+          <div class="frow">
+            <label data-i18n="cfg.urlPrefix">URL Prefix</label>
+            <label class="check"><input type="checkbox" data-cfg="url_prefix" /><span data-i18n="cfg.urlPrefixD">Prefix Serving File URL with full file path, makes each file unique</span></label>
+          </div>
+          <div class="frow">
+            <label data-i18n="cfg.queueScanner">Queue Scanner</label>
+            <label class="check"><input type="checkbox" data-cfg="queue_scanner" /><span data-i18n="cfg.queueScannerD">Enable Queue Scanner to automatically start the next install process on the Queue</span></label>
+          </div>
+
+          <div class="section" data-i18n="cfg.ps">Playstation Configuration</div>
+          <div class="grid4">
+            <label data-i18n="cfg.psIp">Playstation IP</label>
+            <input type="text" data-cfg="ps_ip" placeholder="192.168.0.x" />
+            <div class="cell rel" style="grid-column: span 3">
+              <button class="btn" id="btn-find-ps"><svg data-icon="search"></svg><span data-i18n="cfg.findPs">Search for PlayStation in Network</span></button>
+              <div class="popover" id="found-pop" style="display:none"></div>
+            </div>
+
+            <label data-i18n="cfg.psApp">Playstation App</label>
+            <select data-cfg="ps_app" id="cfg-ps_app">
+              <option value="flatz">PS4 RPI (flatZ)</option>
+              <option value="etahen_v2">PS5 etaHEN - DPI v2 (12800)</option>
+              <option value="etahen_v1">PS5 etaHEN - DPI v1 (9090)</option>
+            </select>
+            <div class="cell"><label data-i18n="cfg.appPort">App Port</label></div>
+            <input type="number" class="w178" min="1" max="65535" data-cfg="app_port" data-num />
+            <div class="cell"><button class="btn" id="btn-test" style="min-width:150px;justify-content:center"><span data-i18n="cfg.test">Test connection</span></button></div>
+          </div>
+          <div class="frow"><span></span><span id="test-result" class="result"></span></div>
+          <div class="frow"><span></span><span class="hint" id="app-hint"></span></div>
+
+          <div class="section right" data-i18n="cfg.params">Parameters</div>
+          <div class="grid4">
+            <label data-i18n="cfg.poll">Progress poll</label>
+            <input type="number" min="500" max="10000" step="100" data-cfg="poll_interval_ms" data-num />
+            <div class="cell"><label data-i18n="cfg.parallel">Parallel installs</label></div>
+            <input type="number" class="w178" min="1" max="8" data-cfg="max_parallel" data-num />
+            <span></span>
+
+            <label data-i18n="cfg.delay">Delay between</label>
+            <input type="number" min="0" max="600" data-cfg="delay_between_s" data-num />
+            <div class="cell"><label data-i18n="cfg.timeout">Request timeout</label></div>
+            <input type="number" class="w178" min="2" max="60" data-cfg="request_timeout_s" data-num />
+            <span></span>
+          </div>
+          <div class="frow" style="margin-top:8px">
+            <label data-i18n="cfg.checkInst">Check installed</label>
+            <label class="check"><input type="checkbox" data-cfg="check_installed" /><span data-i18n="cfg.checkInstD">Skip games that are already installed (flatZ, is_exists)</span></label>
+          </div>
+          <div class="frow">
+            <label data-i18n="cfg.sendIcon">Send icon</label>
+            <label class="check"><input type="checkbox" data-cfg="send_icon" /><span data-i18n="cfg.sendIconD">Send title and icon0.png to etaHEN for the PS5 notification</span></label>
+          </div>
+          <div class="frow">
+            <label data-i18n="cfg.autoServer">Auto start</label>
+            <label class="check"><input type="checkbox" data-cfg="auto_start_server" /><span data-i18n="cfg.autoServerD">Start the local server when the app starts</span></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="view scroll" id="view-settings">
+        <div class="form">
+          <div class="section" data-i18n="set.look">Look &amp; feel</div>
+          <div class="frow">
+            <label data-i18n="set.accent">Accent</label>
+            <div class="swatches" id="swatches">
+              <span class="swatch" data-accent="blue" style="background:#4ea2ff"></span>
+              <span class="swatch" data-accent="green" style="background:#5ccf7c"></span>
+              <span class="swatch" data-accent="violet" style="background:#a78bfa"></span>
+              <span class="swatch" data-accent="amber" style="background:#f2b84b"></span>
+              <span class="swatch" data-accent="rose" style="background:#f47a9b"></span>
+            </div>
+          </div>
+          <div class="frow">
+            <label data-i18n="set.glass">Glass effect</label>
+            <select data-cfg="glass" style="width:192px">
+              <option value="off" data-i18n="set.glassOff">Off</option>
+              <option value="light" data-i18n="set.glassLight">Light</option>
+              <option value="strong" data-i18n="set.glassStrong">Strong</option>
+            </select>
+          </div>
+          <div class="frow">
+            <label data-i18n="set.anim">Animations</label>
+            <label class="check"><input type="checkbox" data-cfg="animations" /><span data-i18n="set.animD">Smooth transitions and effects</span></label>
+          </div>
+          <div class="section" data-i18n="set.behaviour">Behaviour</div>
+          <div class="frow">
+            <label data-i18n="set.confirm">Confirm exit</label>
+            <label class="check"><input type="checkbox" data-cfg="confirm_exit" /><span data-i18n="set.confirmD">Ask before quitting while transfers are running</span></label>
+          </div>
+          <div class="frow">
+            <label data-i18n="set.config">Config file</label>
+            <span class="hint" data-i18n="set.configD">%APPDATA%\com.pkgsender.ps4\config.json</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-logs">
+        <div class="toolbar">
+          <select id="log-filter" style="width:170px">
+            <option value="" data-i18n="log.all">All</option>
+            <option value="error" data-i18n="log.errors">Errors</option>
+            <option value="server" data-i18n="log.server">Server</option>
+            <option value="ok" data-i18n="log.success">Success</option>
+          </select>
+          <button class="btn" id="btn-log-copy"><svg data-icon="copy"></svg><span data-i18n="log.copy">Copy</span></button>
+          <button class="btn" id="btn-log-clear"><svg data-icon="trash"></svg><span data-i18n="log.clear">Clear view</span></button>
+        </div>
+        <div class="loglist" id="log-full"></div>
+      </section>
+
+      <section class="view scroll" id="view-tools">
+        <div class="form">
+          <div class="section" data-i18n="tools.title">Title tools (PS4 flatZ RPI)</div>
+          <div class="frow">
+            <label>Title ID</label>
+            <div class="fline">
+              <input type="text" id="tool-tid" placeholder="CUSA12345" style="width:192px" />
+              <button class="btn" id="btn-tool-check"><svg data-icon="search"></svg><span data-i18n="tools.check">Check installed</span></button>
+              <button class="btn danger" id="btn-tool-ungame"><svg data-icon="trash"></svg><span data-i18n="tools.unGame">Uninstall game</span></button>
+              <button class="btn danger" id="btn-tool-unpatch"><svg data-icon="trash"></svg><span data-i18n="tools.unPatch">Uninstall patch</span></button>
+            </div>
+          </div>
+          <div class="frow">
+            <label>Content ID</label>
+            <div class="fline">
+              <input type="text" id="tool-cid" placeholder="UP0000-CUSA12345_00-XXXXXXXXXXXXXXXX" style="width:340px" />
+              <button class="btn danger" id="btn-tool-undlc"><svg data-icon="trash"></svg><span data-i18n="tools.unDlc">Uninstall DLC</span></button>
+              <button class="btn danger" id="btn-tool-untheme"><svg data-icon="trash"></svg><span data-i18n="tools.unTheme">Uninstall theme</span></button>
+            </div>
+          </div>
+          <div class="frow"><span></span><span class="result" id="tool-result"></span></div>
+          <div class="frow"><span></span><span class="hint" data-i18n="tools.note">These endpoints exist only in the flatZ Remote Package Installer API (and PS4Hub). etaHEN does not provide them.</span></div>
+        </div>
+      </section>
+
+      <section class="view scroll" id="view-about">
+        <div class="card about">
+          <img src="icon.png" alt="" />
+          <div>
+            <h2>PS4 Package Sender</h2>
+            <p data-i18n="about.l1">Remote PKG installer for PS4 (flatZ Remote Package Installer / PS4Hub) and PS5 (etaHEN Direct Package Installer).</p>
+            <p data-i18n="about.l2">Rust + Tauri. The file server runs inside the app process, so closing the app always frees the port.</p>
+            <p class="about-credits"><a href="https://github.com/laroping" id="about-gh">github.com/laroping</a></p>
+            <p class="hint" id="about-ver"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <aside class="drawer" id="drawer">
+    <header><span data-i18n="activity">Activity</span><button class="op" id="btn-drawer-close"><svg data-icon="x"></svg></button></header>
+    <div class="loglist" id="log-mini"></div>
+  </aside>
+
+  <div class="menu" id="menu-miscs">
+    <button data-go="logs"><svg data-icon="list"></svg><span data-i18n="misc.logs">Logs</span></button>
+    <button data-go="tools"><svg data-icon="wrench"></svg><span data-i18n="misc.tools">Title tools</span></button>
+    <hr />
+    <button data-go="about"><svg data-icon="info"></svg><span data-i18n="misc.about">About</span></button>
+  </div>
+  <div class="menu" id="menu-reset">
+    <button data-act="reset-sel"><svg data-icon="rotate"></svg><span data-i18n="reset.sel">Reset selected to queued</span></button>
+    <button data-act="reset-failed"><svg data-icon="rotate"></svg><span data-i18n="reset.failed">Retry failed / stopped</span></button>
+    <hr />
+    <button data-act="rm-sel" class="danger"><svg data-icon="trash"></svg><span data-i18n="reset.rmSel">Remove selected</span></button>
+    <button data-act="rm-done"><svg data-icon="check"></svg><span data-i18n="reset.rmDone">Remove finished</span></button>
+    <button data-act="rm-all" class="danger"><svg data-icon="trash"></svg><span data-i18n="reset.rmAll">Clear queue</span></button>
+  </div>
+  <div class="menu" id="menu-check">
+    <button data-chk="all"><span data-i18n="chk.all">Check all</span></button>
+    <button data-chk="none"><span data-i18n="chk.none">Uncheck all</span></button>
+    <hr />
+    <button data-chk="queued"><span data-i18n="chk.queued">Check queued</span></button>
+    <button data-chk="done"><span data-i18n="chk.done">Check finished</span></button>
+    <button data-chk="failed"><span data-i18n="chk.failed">Check failed / stopped</span></button>
+  </div>
+
+  <div class="drop" id="drop">
+    <div class="zone"><svg class="ants" aria-hidden="true"><rect /></svg><svg class="ico" data-icon="download"></svg><span data-i18n="drop.title">Drop PKG files or folders</span><small data-i18n="drop.sub">They will appear in Server &rarr; Dragged Files</small></div>
+  </div>
+  <div class="toasts" id="toasts"></div>
+  <div class="modal" id="modal"><div class="box"><h3 id="modal-title"></h3><p id="modal-text"></p><div class="acts"><button class="btn" id="modal-no"></button><button class="btn primary" id="modal-yes"></button></div></div></div>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

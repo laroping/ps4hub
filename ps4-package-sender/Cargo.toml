@@ -1,0 +1,39 @@
+[package]
+name = "ps4-package-sender"
+version = "1.0.0"
+edition = "2021"
+authors = ["laroping"]
+repository = "https://github.com/laroping"
+description = "PS4 / PS5 Package Sender - remote PKG installer for flatZ RPI and etaHEN"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+socket2 = "0.6"
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_NetworkManagement_IpHelper",
+  "Win32_NetworkManagement_Ndis",
+  "Win32_Networking_WinSock",
+  "Win32_System_Threading",
+] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+opt-level = 3
+codegen-units = 16
+incremental = true
+strip = true
+panic = "abort"

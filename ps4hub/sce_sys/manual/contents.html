@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PS4Hub - Load GoldHEN</title>
+<style>
+    html, body {
+        margin: 0; padding: 0;
+        background: #001428;
+        color: #e0f0ff;
+        font-family: sans-serif;
+        overflow: hidden;
+    }
+    .wrap {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        text-align: center;
+        padding: 20px;
+    }
+    h1 {
+        color: #70b9ff;
+        font-size: 42px;
+        margin: 0 0 12px 0;
+        letter-spacing: 1px;
+    }
+    .sub {
+        color: #90c0e0;
+        font-size: 18px;
+        margin-bottom: 36px;
+    }
+    #status {
+        color: #ffffff;
+        font-size: 26px;
+        margin-top: 18px;
+        min-height: 36px;
+    }
+    .credits {
+        position: absolute;
+        bottom: 12px; left: 0; right: 0;
+        text-align: center;
+        font-size: 13px;
+        color: #507090;
+    }
+    .credits a { color: #70b9ff; text-decoration: none; }
+    .bar {
+        width: 320px; height: 6px;
+        background: rgba(112, 185, 255, 0.2);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 24px;
+    }
+    .bar > span {
+        display: block; height: 100%;
+        background: linear-gradient(90deg, #70b9ff, #4080ff);
+        animation: slide 1.4s infinite ease-in-out;
+    }
+    @keyframes slide {
+        0%   { margin-left: -40%; width: 40%; }
+        50%  { margin-left: 100%;  width: 40%; }
+        100% { margin-left: 100%;  width: 40%; }
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>PS4Hub Autoloader</h1>
+    <div class="sub">GoldHEN v2.4b18.14</div>
+    <div id="status">Detecting firmware...</div>
+    <div class="bar"><span></span></div>
+</div>
+<div class="credits">
+    Autoloader by <a href="https://github.com/laroping">@laroping</a> &nbsp;|&nbsp;
+    Based on PS4 7.00&ndash;14.02 FW GoldHEN Host by GamerHack
+</div>
+<script>
+(function() {
+    var statusEl = document.getElementById('status');
+    function setStatus(s) { if (statusEl) statusEl.innerHTML = s; }
+
+    var ua = navigator.userAgent || '';
+    var match = ua.match(/PlayStation 4[ /]([\d.]+)/i);
+    var fwVersion = match ? match[1] : 'Unknown';
+    var fwNum = parseFloat(fwVersion);
+    var isPS4 = match !== null;
+
+    if (!isPS4) {
+        setStatus('Only works on a PS4 console');
+        return;
+    }
+
+    setStatus('Firmware ' + fwVersion + ' detected. Loading...');
+
+    function onScriptError() {
+        setStatus('Payload not found &mdash; missing file inside the package');
+    }
+
+    // Loader scripts live under /app0/assets/autoloader/, and the manual
+    // webkit view sits at /app0/sce_sys/manual/, so paths are relative to
+    // ../../assets/autoloader/
+    var base = '../../assets/autoloader/';
+
+    function loadScript(src, asModule) {
+        var s = document.createElement('script');
+        if (asModule) s.type = 'module';
+        s.src = base + src;
+        s.onerror = onScriptError;
+        document.head.appendChild(s);
+        return s;
+    }
+
+    if (fwNum == 5.05 || fwNum == 5.07) {
+        loadScript('505/exploit.js', false);
+    } else if (fwNum >= 7.00 && fwNum <= 8.52) {
+        loadScript('700/alert.js', true);
+    } else if (fwNum >= 9.00 && fwNum <= 9.60) {
+        loadScript('900/alert.js', true);
+    } else if (fwNum >= 10.00 && fwNum <= 11.02) {
+        var s = loadScript('css/main.js', false);
+        s.onload = function() { setTimeout(function() { if (typeof doJb === 'function') doJb(); }, 500); };
+    } else if (fwNum == 11.50 || fwNum == 11.52) {
+        loadScript('slopkit/chain_lapse.js', true);
+    } else if (fwNum >= 12.00 && fwNum <= 14.02) {
+        loadScript('slopkit/jb.js', true);
+    } else {
+        setStatus('Unsupported firmware: <span style="color: #ff6060;">' + fwVersion + '</span>');
+    }
+})();
+</script>
+</body>
+</html>
