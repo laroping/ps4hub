@@ -1,6 +1,6 @@
 # <img src="ps4hub/sce_sys/icon0.png" alt="PS4Hub" width="44" align="absmiddle" /> PS4Hub Suite
 
-PS4Hub is an on-console utility for managing `app.db` home layouts, mounting NTFS storage via `libntfs-3g`, and installing packages via an embedded RPI server (port 12800). PS4 Package Sender is the Windows desktop companion for streaming `.pkg` files to PS4 and PS5 consoles over LAN.
+PS4Hub is an on-console utility for managing `app.db` home layouts, installing `.pkg` files directly from NTFS drives, and receiving packages via an embedded RPI server (port 12800). PS4 Package Sender is the Windows desktop companion for streaming `.pkg` files to PS4 and PS5 consoles over LAN.
 
 > [!IMPORTANT]
 > Verified on **PS4 Pro**, **Firmware 14.02** with GoldHEN.
