@@ -11,12 +11,10 @@ eboot.bin
 __pycache__/
 *.pyc
 
-# Keep runtime autoloader patches and prebuilt releases
+# Keep runtime autoloader patches
 !ps4hub/assets/
 !ps4hub/assets/**/*.elf
-!releases/
-!releases/*.pkg
-!releases/*.exe
+releases/
 
 # Toolchains & environments
 .toolchain/

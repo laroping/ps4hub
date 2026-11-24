@@ -1,6 +1,4 @@
-<img src="ps4hub/sce_sys/icon0.png" alt="PS4Hub" width="88" align="right" />
-
-# PS4Hub Suite
+# <img src="ps4hub/sce_sys/icon0.png" alt="PS4Hub" width="44" align="absmiddle" /> PS4Hub Suite
 
 PS4Hub is an on-console utility for managing `app.db` home layouts, mounting NTFS storage via `libntfs-3g`, and installing packages via an embedded RPI server (port 12800). PS4 Package Sender is the Windows desktop companion for streaming `.pkg` files to PS4 and PS5 consoles over LAN.
 
@@ -14,10 +12,10 @@ PS4Hub is an on-console utility for managing `app.db` home layouts, mounting NTF
 
 ## Prebuilt Releases
 
-Binaries in [`releases/`](releases/):
+Download binaries from [Releases](https://github.com/laroping/ps4hub/releases):
 
-- `releases/ps4hub.pkg` — PS4Hub v1.27 (`CPAN00001`).
-- `releases/ps4-package-sender.exe` — standalone Windows binary (Rust + Tauri 2 / WebView2).
+- [`ps4hub.pkg`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4hub.pkg) — PS4Hub v1.27 (`CPAN00001`).
+- [`ps4-package-sender.exe`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4-package-sender.exe) — standalone Windows binary (Rust + Tauri 2 / WebView2).
 
 ---
 
@@ -92,9 +90,6 @@ ps4hub/
 ├── media/
 │   ├── ps4hub.png
 │   └── ps4-package-sender.png
-├── releases/
-│   ├── ps4hub.pkg
-│   └── ps4-package-sender.exe
 ├── ps4hub/
 │   ├── assets/
 │   ├── sce_module/
