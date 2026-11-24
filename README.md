@@ -54,7 +54,7 @@ C++17 console application built with the OpenOrbis PS4 toolchain, Dear ImGui (CP
 - Fetches version manifests (HTTP/HTTPS) and GitHub Releases metadata for YouTube, Netflix, PS4 Explorer, Apollo Saves, PSBox Cloud, Moonlight, ScummVM, and Harissa64, tracking installed versions across regional Title ID aliases and proxying HTTPS `.pkg` downloads through local BGFT tasks.
 
 #### WebKit Browser Integration & Autoloader
-- Bundles an offline exploit host (`5.05`, `7.00`, `9.00`, `CSS`, `SlopKit`, `goldhen_2.4b18.14.bin`) copied to `/user/data/ps4hub/autoloader` and served over `/load/`.
+- Bundles the offline exploit host from [ps4webkit](https://github.com/laroping/ps4webkit) (`5.05`, `7.00`, `9.00`, `CSS`, `SlopKit`, `goldhen_2.4b18.14.bin`) copied to `/user/data/ps4hub/autoloader` and served over `/load/`.
 - `Install PS4Webkit` backs up `/user/data/ps4hub/backup_browser/`, updates `launch_url` for `NPXS20102` when present in `app.db` without altering browser title or icon, inserts `PS4Webkit Loader` (`/load/`) and `PS4Webkit Loader (Online)` (`https://laroping.github.io/ps4webkit/`) bookmarks into per-user `webbrowser_bookmark.db`, and exposes `Restore Defaults`.
 
 #### GoldHEN Plugins & Game Patches
