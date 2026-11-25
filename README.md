@@ -22,7 +22,8 @@ Download binaries from [Releases](https://github.com/laroping/ps4hub/releases):
 ## 1. PS4Hub
 
 ![PS4Hub](media/ps4hub.png)
-https://github.com/user-attachments/assets/99066bb5-31ca-45d9-b6bb-34e1ad2bde19
+<video src="https://github.com/user-attachments/assets/99066bb5-31ca-45d9-b6bb-34e1ad2bde19" controls="controls" width="100%">
+</video>
 
 C++17 PS4 homebrew application built with OpenOrbis, Dear ImGui, SQLite3, and `libntfs-3g`.
 
