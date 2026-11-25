@@ -1,10 +1,10 @@
 [package]
-name = "ps4-package-sender"
+name = "ps4-ps5-package-sender"
 version = "1.0.0"
 edition = "2021"
 authors = ["laroping"]
 repository = "https://github.com/laroping"
-description = "PS4 / PS5 Package Sender - remote PKG installer for flatZ RPI and etaHEN"
+description = "PS4-PS5 Package Sender - remote PKG installer for flatZ RPI and etaHEN"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

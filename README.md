@@ -1,6 +1,6 @@
 # <img src="ps4hub/sce_sys/icon0.png" alt="PS4Hub" width="44" align="absmiddle" /> PS4Hub Suite
 
-PS4Hub is an on-console utility for managing `app.db` home layouts, installing `.pkg` files directly from NTFS drives, and receiving packages via an embedded RPI server (port 12800). PS4 Package Sender is the Windows desktop companion for streaming `.pkg` files to PS4 and PS5 consoles over LAN.
+PS4Hub is an on-console utility for managing `app.db` home layouts, installing `.pkg` files directly from NTFS drives, and receiving packages via an embedded RPI server (port 12800). PS4-PS5 Package Sender is the Windows desktop companion for streaming `.pkg` files to PS4 and PS5 consoles over LAN.
 
 > [!IMPORTANT]
 > Verified on **PS4 Pro**, **Firmware 14.02** with GoldHEN.
@@ -15,7 +15,7 @@ PS4Hub is an on-console utility for managing `app.db` home layouts, installing `
 Download binaries from [Releases](https://github.com/laroping/ps4hub/releases):
 
 - [`ps4hub.pkg`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4hub.pkg) — PS4Hub v1.27 (`CPAN00001`).
-- [`ps4-package-sender.exe`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4-package-sender.exe) — standalone Windows binary (Rust + Tauri 2 / WebView2).
+- [`ps4-ps5-package-sender.exe`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4-ps5-package-sender.exe) — standalone Windows binary (Rust + Tauri 2 / WebView2).
 
 ---
 
@@ -28,7 +28,7 @@ C++17 PS4 homebrew application built with OpenOrbis, Dear ImGui, SQLite3, and `l
 ### Capabilities
 - **Home Layout (`app.db`):** pin, reorder, hide or restore tiles (including `"What's New"` and `"PlayStation Store"`), save/load layout profiles, backup & restore `app.db`, and experimental `Rebuild game database (Untested)`.
 - **Title & Add-on Manager:** inspects installed Base, Patch, and DLC sizes/versions and uninstalls individual updates or DLC.
-- **Remote Package Installer (`:12800`):** LAN HTTP server compatible with flatZ RPI / PS4 Package Sender, with on-console transfer queue and pause/resume/stop controls.
+- **Remote Package Installer (`:12800`):** LAN HTTP server compatible with flatZ RPI / PS4-PS5 Package Sender, with on-console transfer queue and pause/resume/stop controls.
 - **NTFS USB PKG Installation:** browses NTFS USB drives directly and installs `.pkg` files locally; PS4 shell exFAT mounts are read-only.
 - **App Catalog:** downloads and installs curated homebrew packages directly on the console.
 - **WebKit & Autoloader:** bundles the offline GoldHEN autoloader from [ps4webkit](https://github.com/laroping/ps4webkit) (`5.05-14.02`), adds local (`/load/`) and online (`https://laroping.github.io/ps4webkit/`) bookmarks without modifying browser name or icon, and supports `Restore Defaults`.
@@ -37,9 +37,9 @@ C++17 PS4 homebrew application built with OpenOrbis, Dear ImGui, SQLite3, and `l
 
 ---
 
-## 2. PS4 Package Sender
+## 2. PS4-PS5 Package Sender
 
-![PS4 Package Sender](media/ps4-package-sender.png)
+![PS4-PS5 Package Sender](media/ps4-ps5-package-sender.png)
 
 Windows desktop client written in Rust and Tauri 2 (WebView2).
 
@@ -56,7 +56,7 @@ Windows desktop client written in Rust and Tauri 2 (WebView2).
 ps4hub/
 ├── media/
 │   ├── ps4hub.png
-│   └── ps4-package-sender.png
+│   └── ps4-ps5-package-sender.png
 ├── ps4hub/
 │   ├── assets/
 │   ├── sce_module/
@@ -67,7 +67,7 @@ ps4hub/
 │   ├── build.sh
 │   ├── Makefile
 │   └── project.gp4
-├── ps4-package-sender/
+├── ps4-ps5-package-sender/
 │   ├── capabilities/
 │   ├── gen/
 │   ├── icons/
@@ -95,20 +95,20 @@ cd ps4hub
 
 Output: `ps4hub/ps4hub.pkg`.
 
-### PS4 Package Sender
+### PS4-PS5 Package Sender
 Requires Rust (`cargo`), MSVC Build Tools / Windows SDK, and WebView2 Runtime:
 
 ```powershell
-cd ps4-package-sender
+cd ps4-ps5-package-sender
 cargo build --release
 ```
 
-Output: `ps4-package-sender\target\release\ps4-package-sender.exe`.
+Output: `ps4-ps5-package-sender\target\release\ps4-ps5-package-sender.exe`.
 
 Tests:
 
 ```powershell
-cd ps4-package-sender
+cd ps4-ps5-package-sender
 cargo test
 ```
 

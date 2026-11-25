@@ -642,7 +642,7 @@ fn index_page(sh: &Shared) -> String {
         ));
     }
     format!(
-        "<!doctype html><html><head><meta charset=utf-8><title>PS4 Package Sender</title><style>body{{background:#0d0d0d;color:#ddd;font:14px Segoe UI,sans-serif;padding:24px}}a{{color:#6bd38a;text-decoration:none}}td{{padding:6px 14px;border-bottom:1px solid #222}}h2{{font-weight:500}}</style></head><body><h2>PS4 Package Sender - served files</h2><table>{rows}</table></body></html>"
+        "<!doctype html><html><head><meta charset=utf-8><title>PS4-PS5 Package Sender</title><style>body{{background:#0d0d0d;color:#ddd;font:14px Segoe UI,sans-serif;padding:24px}}a{{color:#6bd38a;text-decoration:none}}td{{padding:6px 14px;border-bottom:1px solid #222}}h2{{font-weight:500}}</style></head><body><h2>PS4-PS5 Package Sender - served files</h2><table>{rows}</table></body></html>"
     )
 }
 

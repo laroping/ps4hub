@@ -44,7 +44,7 @@ window.I18N = {
     "op.install": "Install now", "op.queue": "Add to queue", "op.copy": "Copy URL", "op.reveal": "Show in folder", "op.removeFile": "Remove from list",
     "empty.noData": "No Data", "empty.queue": "Queue is empty - add packages from the Server tab", "empty.base": "Select a PKG base path in Config", "empty.dragged": "Drag & drop PKG files or folders anywhere on the window", "empty.scanning": "Scanning…",
     "toast.added": "Added {n} to the queue", "toast.copied": "URL copied", "toast.saved": "Saved", "toast.noScan": "Nothing found on the network", "toast.started": "Started {n} item(s)", "toast.nothing": "Nothing to start",
-    "modal.quitT": "Quit PS4 Package Sender?", "modal.quitP": "{n} transfer(s) are still running. The server will stop and the port will be released.", "modal.yes": "Quit", "modal.no": "Cancel",
+    "modal.quitT": "Quit PS4-PS5 Package Sender?", "modal.quitP": "{n} transfer(s) are still running. The server will stop and the port will be released.", "modal.yes": "Quit", "modal.no": "Cancel",
     "modal.killT": "Close {name}?", "modal.killP": "Process {name} (PID {pid}) is listening on port {port}. Terminate it to free the port?", "modal.kill": "Terminate",
     "modal.ok": "OK", "modal.cancel": "Cancel",
     "pill.server": "Server", "pill.off": "Server off",

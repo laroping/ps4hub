@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "PS4 Package Sender",
+  "productName": "PS4-PS5 Package Sender",
   "version": "1.0.0",
   "identifier": "com.pkgsender.ps4",
   "build": {
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "PS4 Package Sender",
+        "title": "PS4-PS5 Package Sender",
         "width": 1300,
         "height": 820,
         "minWidth": 980,

@@ -1,4 +1,4 @@
-# PS4 Package Sender
+# PS4-PS5 Package Sender
 
 Windows remote PKG installer for PS4 and PS5.
 Built with Rust + Tauri 2 (WebView2) and a plain HTML/CSS/JS UI with no bundler.
@@ -30,7 +30,7 @@ Built with Rust + Tauri 2 (WebView2) and a plain HTML/CSS/JS UI with no bundler.
 ## Build
 
 ```powershell
-cargo build --release        # -> target\release\ps4-package-sender.exe (single file, ~5 MB)
+cargo build --release        # -> target\release\ps4-ps5-package-sender.exe (single file, ~5 MB)
 ```
 
 Optional installer: `cargo install tauri-cli --version "^2"` then `cargo tauri build` (NSIS).

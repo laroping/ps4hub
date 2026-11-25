@@ -84,7 +84,7 @@ pub fn request(
 ) -> Result<Resp, String> {
     let mut s = connect(host, port, timeout)?;
     let mut req = format!(
-        "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nUser-Agent: PS4PackageSender/1.0\r\nAccept: */*\r\nConnection: close\r\n"
+        "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nUser-Agent: PS4PS5PackageSender/1.0\r\nAccept: */*\r\nConnection: close\r\n"
     );
     if method != "GET" || !body.is_empty() {
         req.push_str(&format!("Content-Length: {}\r\n", body.len()));

@@ -265,7 +265,10 @@ fn main() {
             core.ensure_server_ip();
             core.log(
                 "info",
-                format!("PS4 Package Sender {} started", env!("CARGO_PKG_VERSION")),
+                format!(
+                    "PS4-PS5 Package Sender {} started",
+                    env!("CARGO_PKG_VERSION")
+                ),
             );
             core.load_dragged();
             let auto_scan = core.inner.lock().unwrap().cfg.auto_scan;

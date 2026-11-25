@@ -6,7 +6,7 @@ target/
 *.oelf
 ps4hub/*.elf
 ps4hub/*.pkg
-ps4-package-sender/*.exe
+ps4-ps5-package-sender/*.exe
 eboot.bin
 __pycache__/
 *.pyc
