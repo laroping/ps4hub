@@ -21,6 +21,7 @@
 #include "network_service.h"
 #include "ntfs_manager.h"
 #include "platform.h"
+#include "self_updater.h"
 #include "title_inspector.h"
 #include "ui_theme.h"
 #include "ui_views.h"
@@ -265,6 +266,7 @@ int main(int, char **) {
         Poller::start();
 
         AppCatalog::startAutoRefresh();
+        SelfUpdater::instance().startAutoCheck();
       }
 
       // Pacing: if the flip already waits for vblank it paces us; otherwise

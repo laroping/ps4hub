@@ -186,5 +186,6 @@ private:
   int layoutProfiles_ = 0;
   int blockerState_ = -1; // UpdateBlocker::State as int, -1 unknown
   unsigned rebuildSerial_ = 0;
+  unsigned updaterSerial_ = 0;
   std::string localIp_;
 };

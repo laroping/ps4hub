@@ -14,8 +14,8 @@ PS4Hub is an on-console PS4 utility for managing `app.db` home layouts, browsing
 
 Download binaries from [Releases](https://github.com/laroping/ps4hub/releases):
 
-- [`ps4hub.pkg`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4hub.pkg) - PS4Hub v1.27 (`CPAN00001`).
-- [`ps4-ps5-package-sender.exe`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4-ps5-package-sender.exe) - standalone Windows binary (Rust + Tauri 2 / WebView2).
+- [`ps4hub.pkg`](https://github.com/laroping/ps4hub/releases/download/v1.28/ps4hub.pkg) - PS4Hub v1.28 (`CPAN00001`).
+- [`ps4-ps5-package-sender.exe`](https://github.com/laroping/ps4hub/releases/download/v1.28/ps4-ps5-package-sender.exe) - PS4-PS5 Package Sender v1.0.0 (Windows x64 binary, Rust + Tauri 2 / WebView2).
 
 ---
 
@@ -33,6 +33,7 @@ C++17 PS4 homebrew application built with OpenOrbis, Dear ImGui, SQLite3, and `l
 - **App Catalog:** downloads and installs curated homebrew packages directly on the console.
 - **WebKit & Autoloader:** bundles the offline GoldHEN autoloader from [ps4webkit](https://github.com/laroping/ps4webkit) (`5.05-14.02`), adds local (`/load/`) and online (`https://laroping.github.io/ps4webkit/`) bookmarks, and supports `Restore Defaults`.
 - **GoldHEN Plugins & Game Patches:** installs and toggles YouTube AdBlock (+ SponsorBlock), No Share Watermark, and GoldHEN XML game patches.
+- **Self-Updater (`System` tab):** checks GitHub Releases, downloads `ps4hub.pkg` into `/data/pkg/`, verifies SHA-256 against release metadata, and triggers local install via `http://127.0.0.1:12800/api/install` (with `AppInstUtil` and manual GoldHEN Package Installer fallback).
 - **System Tools:** firmware update blocker, wired LAN profile backup/restore, local service monitor, and temporary file cleaner.
 
 ---

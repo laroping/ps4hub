@@ -8,7 +8,7 @@ if command -v make >/dev/null 2>&1; then
     exec make "$@"
 fi
 
-TITLE="PS4Hub"; VERSION="1.27"; TITLE_ID="CPAN00001"
+TITLE="PS4Hub"; VERSION="1.28"; TITLE_ID="CPAN00001"
 CONTENT_ID="IV0000-CPAN00001_00-CONTROLPANEL0000"
 TC=.toolchain/OpenOrbis/PS4Toolchain; LLVM=.toolchain/llvm/bin; GH=.toolchain/goldhen_sdk
 OOBIN=$TC/bin/windows; BUILD=build

@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 
 TITLE       := PS4Hub
-VERSION     := 1.27
+VERSION     := 1.28
 TITLE_ID    := CPAN00001
 CONTENT_ID  := IV0000-CPAN00001_00-CONTROLPANEL0000
 OUTPUT_PKG  := ps4hub.pkg

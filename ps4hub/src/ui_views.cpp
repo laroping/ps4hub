@@ -22,6 +22,7 @@
 #include "net_profiles.h"
 #include "pkg_installer.h"
 #include "platform.h"
+#include "self_updater.h"
 #include "sfo_parser.h"
 #include "system_tools.h"
 #include "title_inspector.h"
@@ -381,6 +382,61 @@ std::vector<UiRoot::Entry> UiRoot::systemEntries() const {
   std::vector<Entry> v;
   AppController &c = ctl_;
   UiRoot *self = const_cast<UiRoot *>(this);
+  {
+    SelfUpdater::Snapshot up = SelfUpdater::instance().snapshot();
+    Entry ue;
+    ue.category = "PS4HUB UPDATE (v" APP_VERSION ")";
+    if (up.busy) {
+      ue.label = up.state == SelfUpdater::State::Downloading
+                     ? "Downloading PS4Hub update..."
+                 : up.state == SelfUpdater::State::Verifying
+                     ? "Verifying SHA-256 checksum..."
+                 : up.state == SelfUpdater::State::Installing
+                     ? "Installing PS4Hub update..."
+                     : "Checking for PS4Hub updates...";
+      ue.detail = up.message;
+      ue.enabled = false;
+    } else if (up.updateAvailable) {
+      ue.label = "Update PS4Hub to v" + up.release.version;
+      ue.detail = !up.message.empty()
+                      ? up.message
+                      : "Downloads to /data/pkg/, verifies SHA-256, and "
+                        "installs via 127.0.0.1:12800";
+      ue.action = [self] {
+        if (!SelfUpdater::instance().startUpdate())
+          self->ctl_.notify("Updater is already busy", true);
+      };
+      ue.confirm =
+          "Update PS4Hub to v" + up.release.version +
+          "?\nDownloads ps4hub.pkg to /data/pkg/, verifies SHA-256, "
+          "and sends install RPC to http://127.0.0.1:12800/api/install.";
+    } else {
+      ue.label = "Check for PS4Hub updates";
+      ue.detail =
+          !up.message.empty()
+              ? up.message
+              : "Checks GitHub Releases (laroping/ps4hub) for newer versions";
+      ue.action = [self] {
+        if (!SelfUpdater::instance().startCheck())
+          self->ctl_.notify("Updater is already busy", true);
+      };
+    }
+    v.push_back(std::move(ue));
+    if (!up.busy && !up.savedPkgPath.empty()) {
+      v.push_back(
+          {"Install verified PKG directly",
+           up.savedPkgPath + " (AppInstUtil fallback)",
+           [self] {
+             if (!SelfUpdater::instance().startDirectInstall())
+               self->ctl_.notify("Updater is already busy", true);
+           },
+           false, true,
+           "Install saved verified package?\nRuns SceAppInstUtilAppInstallPkg "
+           "on " +
+               up.savedPkgPath + "."});
+    }
+  }
+  const size_t firstHomeIdx = v.size();
   switch (ctl_.defaultTiles()) {
   case DefaultTiles::Visible:
   case DefaultTiles::Mixed:
@@ -401,6 +457,8 @@ std::vector<UiRoot::Entry> UiRoot::systemEntries() const {
                  false});
     break;
   }
+  if (v.size() > firstHomeIdx)
+    v[firstHomeIdx].category = "HOME SCREEN & SYSTEM";
   size_t hidden = ctl_.hiddenItems().size();
   v.push_back({"Hidden tiles" + (hidden ? " (" + std::to_string(hidden) + ")"
                                         : std::string()),
@@ -1038,6 +1096,16 @@ bool UiRoot::draw(float dt) {
     if (jobs.running())
       Anim::activeFlag() = true;
   }
+  {
+    auto up = SelfUpdater::instance().snapshot();
+    if (up.eventSerial != updaterSerial_) {
+      updaterSerial_ = up.eventSerial;
+      ctl_.notify(up.eventMessage, up.eventError);
+      Platform::notify(up.eventMessage);
+    }
+    if (up.busy)
+      Anim::activeFlag() = true;
+  }
   Anim::approach(pageAnim_, 1.0f, 8.0f, dt);
   Anim::approach(intro_, 1.0f, 3.2f, dt);
   if (quitRequested_)
@@ -1154,6 +1222,11 @@ void UiRoot::drawTopBar(ImDrawList *dl, float dt) {
                     kIcons[i], col);
     Theme::Text(dl, tabX[i] + padX + iconS + 12.0f, y + (h - fs) * 0.5f - 2.0f,
                 fs, col, kTabs[i]);
+    if (i == (int)Tab::System &&
+        SelfUpdater::instance().snapshot().updateAvailable) {
+      dl->AddCircleFilled(ImVec2(tabX[i] + tabW[i] - 12.0f, y + 14.0f), 4.5f,
+                          Theme::accentBright(), 12);
+    }
   }
   Theme::ButtonGlyph(dl, ImVec2(x + 10.0f, y + (h - 32.0f) * 0.5f), 32.0f,
                      Glyph::R1, locked ? 0.3f : 0.75f);
