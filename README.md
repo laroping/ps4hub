@@ -31,7 +31,7 @@ C++17 PS4 homebrew application built with OpenOrbis, Dear ImGui, SQLite3, and `l
 - **Remote Package Installer (`:12800`):** LAN HTTP server compatible with flatZ RPI / PS4-PS5 Package Sender, with on-console transfer queue and pause/resume/stop controls.
 - **NTFS USB Explorer & Direct `.pkg` Installer:** browse NTFS-formatted USB drives (HDD/SSD/flash) directly on PS4 and install `.pkg` files locally without converting to exFAT; PS4 shell exFAT mounts are read-only.
 - **App Catalog:** downloads and installs curated homebrew packages directly on the console.
-- **WebKit & Autoloader:** bundles the offline GoldHEN autoloader from [ps4webkit](https://github.com/laroping/ps4webkit) (`5.05-14.02`), adds local (`/load/`) and online (`https://laroping.github.io/ps4webkit/`) bookmarks without modifying browser name or icon, and supports `Restore Defaults`.
+- **WebKit & Autoloader:** bundles the offline GoldHEN autoloader from [ps4webkit](https://github.com/laroping/ps4webkit) (`5.05-14.02`), adds local (`/load/`) and online (`https://laroping.github.io/ps4webkit/`) bookmarks, and supports `Restore Defaults`.
 - **GoldHEN Plugins & Game Patches:** installs and toggles YouTube AdBlock (+ SponsorBlock), No Share Watermark, and GoldHEN XML game patches.
 - **System Tools:** firmware update blocker, wired LAN profile backup/restore, local service monitor, and temporary file cleaner.
 
