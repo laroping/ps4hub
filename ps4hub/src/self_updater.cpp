@@ -23,6 +23,7 @@
 
 #include "config.h"
 #include "gh_plugins.h"
+#include "libc_compat.h"
 #include "network_service.h"
 #include "pkg_installer.h"
 #include "platform.h"
@@ -455,7 +456,7 @@ bool mkdirs(const std::string &path) {
   if (!path.empty())
     mkdir(path.c_str(), 0777);
   struct stat st{};
-  return stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
+  return Compat::stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
 }
 
 bool copyFileChunked(const std::string &src, const std::string &dst) {
@@ -665,7 +666,7 @@ struct EphemeralPkgServer {
   static void *serveEntry(void *arg) {
     auto *self = static_cast<EphemeralPkgServer *>(arg);
     struct stat st{};
-    if (stat(self->filePath.c_str(), &st) != 0 || st.st_size <= 0)
+    if (Compat::stat(self->filePath.c_str(), &st) != 0 || st.st_size <= 0)
       return nullptr;
     const uint64_t totalSize = (uint64_t)st.st_size;
 
@@ -1066,7 +1067,8 @@ void SelfUpdater::runUpdate() {
   // Reuse an already downloaded and verified package on disk when possible.
   struct stat existingSt{};
   bool alreadyVerifiedOnDisk = false;
-  if (stat(finalPath.c_str(), &existingSt) == 0 && existingSt.st_size > 0 &&
+  if (Compat::stat(finalPath.c_str(), &existingSt) == 0 &&
+      existingSt.st_size > 0 &&
       (rel.sizeBytes == 0 || (uint64_t)existingSt.st_size == rel.sizeBytes)) {
     setProgress(State::Verifying, "Verifying existing package SHA-256...", 0,
                 (uint64_t)existingSt.st_size);
@@ -1106,10 +1108,15 @@ void SelfUpdater::runUpdate() {
     }
 
     struct stat dlSt{};
-    if (stat(partPath.c_str(), &dlSt) != 0 || dlSt.st_size <= 0 ||
+    if (Compat::stat(partPath.c_str(), &dlSt) != 0 || dlSt.st_size <= 0 ||
         (rel.sizeBytes > 0 && (uint64_t)dlSt.st_size != rel.sizeBytes)) {
+      long long gotSize = (long long)dlSt.st_size;
       std::remove(partPath.c_str());
-      finishEvent(State::Failed, "Downloaded package size mismatch", true);
+      finishEvent(State::Failed,
+                  "Downloaded package size mismatch (" +
+                      std::to_string(gotSize) + " vs " +
+                      std::to_string((unsigned long long)rel.sizeBytes) + ")",
+                  true);
       return;
     }
 
@@ -1155,7 +1162,7 @@ void SelfUpdater::runDirectInstall() {
     return;
   }
   struct stat st{};
-  if (stat(pkgPath.c_str(), &st) != 0 || st.st_size <= 0) {
+  if (Compat::stat(pkgPath.c_str(), &st) != 0 || st.st_size <= 0) {
     finishEvent(State::Failed, "Saved package missing: " + pkgPath, true);
     return;
   }
