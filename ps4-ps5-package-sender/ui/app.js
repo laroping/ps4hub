@@ -107,7 +107,7 @@ const fmtSize = (b) => {
 };
 const fmtSpeed = (b) => (!b ? "" : b >= 1048576 ? (b / 1048576).toFixed(1) + " MB/s" : Math.round(b / 1024) + " KB/s");
 const fmtEta = (s) => {
-  if (s == null) return "—";
+  if (s == null) return "-";
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
   return h ? `${h}h ${m}m` : m ? `${m}m ${x}s` : `${x}s`;
 };
@@ -367,7 +367,7 @@ function qRowHtml(q) {
   const sub = isErr ? q.error : `${esc(q.title_id || "")} · ${esc(q.name || "")}`;
   const kind = q.kind || "Game";
   const plat = q.target === "flatz" ? "PS4" : "PS5";
-  const rest = q.status === "downloading" ? fmtEta(q.rest_sec) : "—";
+  const rest = q.status === "downloading" ? fmtEta(q.rest_sec) : "-";
   const statusName = STATUS_NAMES[q.status] || q.status;
   const pct = (q.progress || 0).toFixed(1);
   const isDl = q.status === "downloading";
@@ -470,7 +470,7 @@ function patchQRow(row, q) {
   setText(r.tagKind, kind);
   setText(r.tagPlat, plat);
 
-  setText(r.rest, q.status === "downloading" ? fmtEta(q.rest_sec) : "—");
+  setText(r.rest, q.status === "downloading" ? fmtEta(q.rest_sec) : "-");
 
   const statusName = STATUS_NAMES[q.status] || q.status;
   const stKey = `${q.status}:${statusName}`;
@@ -628,7 +628,7 @@ function libRowHtml(f, qByFile) {
         <div class="name-sub" title="${esc(f.path)}">${esc(f.name)}</div>
       </div>
     </div>
-    <div class="tid mono">${esc(f.title_id || "—")}</div>
+    <div class="tid mono">${esc(f.title_id || "-")}</div>
     <div class="status-cell">${statusHtml}</div>
     <div class="size mono r">${fmtSize(f.size)}</div>
     <div class="ops-cell">
@@ -674,7 +674,7 @@ function patchLibRow(row, f, qByFile) {
   setText(r.title, f.title || f.name);
   setText(r.sub, f.name);
   if (r.sub.title !== f.path) r.sub.title = f.path;
-  setText(r.tid, f.title_id || "—");
+  setText(r.tid, f.title_id || "-");
   setText(r.size, fmtSize(f.size));
 
   const st = libItemStatus(f, qByFile);

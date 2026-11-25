@@ -53,4 +53,4 @@ python tools\ui_preview.py                         # UI preview in a browser (mo
 
 ## Credits
 
-* **laroping** — https://github.com/laroping
+* **laroping**: https://github.com/laroping

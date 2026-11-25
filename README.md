@@ -6,7 +6,7 @@ PS4Hub is an on-console PS4 utility for managing `app.db` home layouts, browsing
 > Verified on **PS4 Pro**, **Firmware 14.02** with GoldHEN.
 
 > [!WARNING]
-> **`Rebuild game database (Untested)`** is the only untested function in PS4Hub. It can corrupt `app.db` — use at your own risk (`app.db` is backed up before execution).
+> **`Rebuild game database (Untested)`** is the only untested function in PS4Hub. It can corrupt `app.db` - use at your own risk (`app.db` is backed up before execution).
 
 ---
 
@@ -14,8 +14,8 @@ PS4Hub is an on-console PS4 utility for managing `app.db` home layouts, browsing
 
 Download binaries from [Releases](https://github.com/laroping/ps4hub/releases):
 
-- [`ps4hub.pkg`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4hub.pkg) — PS4Hub v1.27 (`CPAN00001`).
-- [`ps4-ps5-package-sender.exe`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4-ps5-package-sender.exe) — standalone Windows binary (Rust + Tauri 2 / WebView2).
+- [`ps4hub.pkg`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4hub.pkg) - PS4Hub v1.27 (`CPAN00001`).
+- [`ps4-ps5-package-sender.exe`](https://github.com/laroping/ps4hub/releases/download/v1.27/ps4-ps5-package-sender.exe) - standalone Windows binary (Rust + Tauri 2 / WebView2).
 
 ---
 
