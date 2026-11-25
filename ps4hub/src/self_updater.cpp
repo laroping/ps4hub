@@ -1202,8 +1202,106 @@ void SelfUpdater::runDirectInstall() {
               false, pkgPath);
 }
 
+// The PKG header stores the content ID in a 36-byte, zero-padded field.
+static std::string readPkgContentId(const std::string &path) {
+  FILE *f = std::fopen(path.c_str(), "rb");
+  if (!f)
+    return {};
+  uint8_t buf[0x64]{};
+  if (std::fread(buf, 1, sizeof(buf), f) != sizeof(buf)) {
+    std::fclose(f);
+    return {};
+  }
+  std::fclose(f);
+  // Verify PS4 PKG magic: 0x7F 'C' 'N' 'T'
+  if (buf[0] != 0x7F || buf[1] != 'C' || buf[2] != 'N' || buf[3] != 'T')
+    return {};
+  const auto *id = reinterpret_cast<const char *>(buf + 0x40);
+  return std::string(id, ::strnlen(id, 0x24));
+}
+
 void SelfUpdater::installVerifiedPkg(const ReleaseInfo &rel,
                                      const std::string &pkgPath) {
+  // Primary path: use BGFT with local file path (no HTTP hop, no EXDEV).
+  // /data/pkg/... maps to /user/data/pkg/... from SceShellCore's view.
+  const Bgft::Api *bgft = Platform::bgft();
+  if (bgft && bgft->debugRegisterPkg && bgft->startTask) {
+    setProgress(State::Installing,
+                "Registering update in Downloads via BGFT...");
+
+    // Build system-visible path (/data/ -> /user/data/).
+    std::string sysPath;
+    if (pkgPath.rfind("/data/", 0) == 0)
+      sysPath = "/user" + pkgPath;
+    else
+      sysPath = pkgPath;
+
+    // Read content ID from PKG header.
+    const std::string contentId = readPkgContentId(pkgPath);
+
+    std::string displayName = "PS4Hub v" + rel.version + " Update";
+
+    Bgft::DownloadParam p{};
+    p.userId            = Platform::userId();
+    p.entitlementType   = 5;
+    p.id                = contentId.c_str();
+    p.contentUrl        = sysPath.c_str();
+    p.contentExUrl      = "";
+    p.contentName       = displayName.c_str();
+    p.iconPath          = "";
+    p.skuId             = "";
+    p.option            = Bgft::kOptDisableCdnQueryParam;
+    p.playgoScenarioId  = "0";
+    p.releaseDate       = "";
+    p.packageType       = "PS4GD";
+    p.packageSubType    = "";
+    p.packageSize       = rel.sizeBytes;
+
+    int32_t taskId = Bgft::kInvalidTask;
+    int32_t rc = bgft->debugRegisterPkg(&p, &taskId);
+
+    // 0x80990088 = already installed/queued, 0x80990086 = already downloading:
+    // find the existing task, stop it, unregister, then retry once.
+    if ((rc == Bgft::kErrAlreadyInstalled || rc == Bgft::kErrAlreadyDownloading) &&
+        bgft->findTaskByContentId && bgft->stopTask && bgft->unregisterTask &&
+        !contentId.empty()) {
+      int32_t oldTask = Bgft::kInvalidTask;
+      if (bgft->findTaskByContentId(contentId.c_str(), 0, &oldTask) == 0 &&
+          oldTask != Bgft::kInvalidTask) {
+        bgft->stopTask(oldTask);
+        if (bgft->unregisterTask(oldTask) == 0) {
+          taskId = Bgft::kInvalidTask;
+          rc = bgft->debugRegisterPkg(&p, &taskId);
+        }
+      }
+    }
+
+    if (rc == 0 && taskId != Bgft::kInvalidTask) {
+      rc = bgft->startTask(taskId);
+      if (rc == 0) {
+        finishEvent(State::Installed,
+                    "PS4Hub v" + rel.version +
+                        " queued in Downloads (SHA-256 verified). "
+                        "Exit PS4Hub to let the system apply the update.",
+                    false, pkgPath);
+        return;
+      }
+      if (bgft->unregisterTask)
+        bgft->unregisterTask(taskId);
+    }
+
+    // BGFT local-path failed; log the code and fall through to RPC / fallback.
+    char bgftHex[16];
+    if (rc == 0)
+      std::snprintf(bgftHex, sizeof(bgftHex), "no task ID");
+    else
+      std::snprintf(bgftHex, sizeof(bgftHex), "0x%08X", (unsigned)rc);
+    setProgress(State::Installing,
+                std::string("BGFT local returned ") + bgftHex +
+                    ", trying RPC fallback...");
+  }
+
+  // Secondary path: GoldHEN RPI HTTP /api/install (original behaviour).
   setProgress(State::Installing,
               "Sending local install RPC to 127.0.0.1:12800...");
 
@@ -1245,31 +1343,15 @@ void SelfUpdater::installVerifiedPkg(const ReleaseInfo &rel,
   bool rpcOk = rpcContacted && httpStatus >= 200 && httpStatus < 300 &&
                lowBody.find("\"success\"") != std::string::npos;
 
-  // When PS4Hub's own NetworkService owns port 12800, verify BGFT actually
-  // created/activated a download task rather than silently skipping because
-  // CPAN00001 is already installed.
-  if (rpcOk && svcRunning && svc.port() == kRpiPort) {
-    bool queuedActiveTask = false;
-    for (const auto &t : svc.tasks()) {
-      if (t.contentId.find(APP_TITLE_ID) != std::string::npos &&
-          t.taskId >= 0 && !t.complete && !t.stopped && t.error == 0) {
-        queuedActiveTask = true;
-        break;
-      }
-    }
-    if (!queuedActiveTask)
-      rpcOk = false;
-  }
-
   if (rpcOk) {
     if (ephem.threadStarted) {
       ephem.keepAliveBriefly(12);
       ephem.stop();
     }
     finishEvent(State::Installed,
-                "Update v" + rel.version +
-                    " SHA-256 verified & queued via :12800 (saved in " +
-                    pkgPath + "). Exit if prompted.",
+                "PS4Hub v" + rel.version +
+                    " SHA-256 verified & queued via :12800. "
+                    "Exit PS4Hub to apply.",
                 false, pkgPath);
     return;
   }
@@ -1277,8 +1359,6 @@ void SelfUpdater::installVerifiedPkg(const ReleaseInfo &rel,
   if (ephem.threadStarted)
     ephem.stop();
 
-  // If :12800 RPI is completely disabled, notify the user clearly with the
-  // verified /data/pkg path per GoldHEN Package Installer fallback.
   if (unreachable && !svcRunning) {
     finishEvent(State::FallbackNotice,
                 "GoldHEN RPI (:12800) is disabled. SHA-256 verified PKG saved "
@@ -1288,14 +1368,12 @@ void SelfUpdater::installVerifiedPkg(const ReleaseInfo &rel,
     return;
   }
 
-  // Fallback for already-installed CPAN00001 (0x80990088) or alternate port:
-  // attempt direct AppInstUtil installation from the verified file on disk.
+  // Last-resort: sceAppInstUtilAppInstallPkg.
   const Platform::AppInstApi *ai = Platform::appInst();
   if (ai && ai->installPkg) {
-    setProgress(State::Installing,
-                "Installing verified PKG via AppInstUtil...");
-    int32_t rc = ai->installPkg(pkgPath.c_str(), nullptr);
-    if (rc == 0) {
+    setProgress(State::Installing, "Installing via AppInstUtil...");
+    int32_t rc2 = ai->installPkg(pkgPath.c_str(), nullptr);
+    if (rc2 == 0) {
       finishEvent(State::Installed,
                   "PS4Hub v" + rel.version +
                       " SHA-256 verified & installed! Restart PS4Hub.",
@@ -1303,7 +1381,7 @@ void SelfUpdater::installVerifiedPkg(const ReleaseInfo &rel,
       return;
     }
     char codeHex[16];
-    std::snprintf(codeHex, sizeof(codeHex), "0x%08X", (unsigned)rc);
+    std::snprintf(codeHex, sizeof(codeHex), "0x%08X", (unsigned)rc2);
     finishEvent(State::FallbackNotice,
                 "SHA-256 verified PKG saved to " + pkgPath +
                     ". Close PS4Hub and install via GoldHEN Package Installer "

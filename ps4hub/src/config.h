@@ -2,7 +2,7 @@
 
 #define APP_TITLE "PS4Hub"
 #define APP_TITLE_ID "CPAN00001"
-#define APP_VERSION "1.28"
+#define APP_VERSION "1.29"
 
 #define DEFAULT_DB_PATH "/system_data/priv/mms/app.db"
 #define BACKUP_DB_PATH "/system_data/priv/mms/app.db.bak"

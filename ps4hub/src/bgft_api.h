@@ -10,7 +10,8 @@
 namespace Bgft {
 
 constexpr int32_t kInvalidTask = -1;
-constexpr int32_t kErrAlreadyInstalled = (int32_t)0x80990088;
+constexpr int32_t kErrAlreadyInstalled  = (int32_t)0x80990088;
+constexpr int32_t kErrAlreadyDownloading = (int32_t)0x80990086;
 constexpr int32_t kOptDisableCdnQueryParam = 0x10000;
 
 struct DownloadParam {
