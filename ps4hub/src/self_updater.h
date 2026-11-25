@@ -3,10 +3,8 @@
 #include <cstdint>
 #include <string>
 
-// Checks GitHub Releases for newer PS4Hub builds, downloads ps4hub.pkg to
-// /data/pkg/, verifies its SHA-256 digest against release metadata, and
-// triggers installation via http://127.0.0.1:12800/api/install with an
-// AppInstUtil / manual GoldHEN Package Installer fallback notice.
+// Downloads and verifies ps4hub.pkg, then guides manual installation in GoldHEN.
+// On startup, removes this app's downloaded PKGs at the running version or older.
 class SelfUpdater {
 public:
   enum class State {
@@ -16,9 +14,7 @@ public:
     Available,
     Downloading,
     Verifying,
-    Installing,
-    Installed,
-    FallbackNotice,
+    ReadyToInstall,
     Failed
   };
 
@@ -53,7 +49,7 @@ public:
 
   bool startCheck();
   bool startUpdate();
-  bool startDirectInstall();
+  static std::string manualInstallInstructions(const std::string &path);
 
   Snapshot snapshot() const;
 
@@ -67,16 +63,13 @@ private:
   enum class Action {
     QuietCheck,
     ManualCheck,
-    DownloadAndInstall,
-    DirectInstall
+    Download
   };
   bool launch(Action action);
   static void *threadEntry(void *arg);
 
   void runCheck(bool quiet);
   void runUpdate();
-  void runDirectInstall();
-  void installVerifiedPkg(const ReleaseInfo &rel, const std::string &pkgPath);
   void setProgress(State st, const std::string &msg, uint64_t dlBytes = 0,
                    uint64_t totalBytes = 0);
   void finishEvent(State st, const std::string &msg, bool error,

@@ -1,16 +1,8 @@
 #include "self_updater.h"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <poll.h>
 #include <pthread.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <atomic>
@@ -24,17 +16,13 @@
 #include "config.h"
 #include "gh_plugins.h"
 #include "libc_compat.h"
-#include "network_service.h"
-#include "pkg_installer.h"
-#include "platform.h"
+#include "update_cleanup.h"
 
 namespace {
 
 constexpr const char *kLatestReleaseUrl =
     "https://api.github.com/repos/laroping/ps4hub/releases/latest";
 constexpr const char *kPkgSaveDir = "/data/pkg";
-constexpr const char *kStageName = "ps4hub_update.pkg";
-constexpr int kRpiPort = 12800;
 
 std::mutex g_mutex;
 SelfUpdater::Snapshot g_snap;
@@ -459,377 +447,6 @@ bool mkdirs(const std::string &path) {
   return Compat::stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
 }
 
-bool copyFileChunked(const std::string &src, const std::string &dst) {
-  std::string tmp = dst + ".tmp";
-  std::remove(tmp.c_str());
-  FILE *in = std::fopen(src.c_str(), "rb");
-  if (!in)
-    return false;
-  FILE *out = std::fopen(tmp.c_str(), "wb");
-  if (!out) {
-    std::fclose(in);
-    return false;
-  }
-  std::vector<char> buf(256 * 1024);
-  bool ok = true;
-  while (true) {
-    size_t n = std::fread(buf.data(), 1, buf.size(), in);
-    if (n > 0) {
-      if (std::fwrite(buf.data(), 1, n, out) != n) {
-        ok = false;
-        break;
-      }
-    }
-    if (n < buf.size()) {
-      if (std::ferror(in))
-        ok = false;
-      break;
-    }
-  }
-  std::fclose(in);
-  if (std::fflush(out) != 0)
-    ok = false;
-  std::fclose(out);
-  if (!ok) {
-    std::remove(tmp.c_str());
-    return false;
-  }
-  std::remove(dst.c_str());
-  if (std::rename(tmp.c_str(), dst.c_str()) != 0) {
-    std::remove(tmp.c_str());
-    return false;
-  }
-  return true;
-}
-
-bool stageServableFile(const std::string &srcPkg, std::string &stagePath) {
-  if (!mkdirs(APP_WORK_DIR))
-    return false;
-  stagePath = std::string(APP_WORK_DIR) + "/" + kStageName;
-  std::remove(stagePath.c_str());
-  if (link(srcPkg.c_str(), stagePath.c_str()) == 0)
-    return true;
-  return copyFileChunked(srcPkg, stagePath);
-}
-
-std::string jsonEscape(const std::string &s) {
-  std::string o;
-  o.reserve(s.size() + 8);
-  for (char c : s) {
-    if (c == '"' || c == '\\') {
-      o += '\\';
-      o += c;
-    } else if ((unsigned char)c < 0x20) {
-      o += ' ';
-    } else {
-      o += c;
-    }
-  }
-  return o;
-}
-
-// Connects to 127.0.0.1:port with a bounded non-blocking timeout so a disabled
-// RPI port fails fast instead of stalling.
-int connectLoopback(int port, int timeoutMs, int &outErrno) {
-  int fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (fd < 0) {
-    outErrno = errno;
-    return -1;
-  }
-  int flags = fcntl(fd, F_GETFL, 0);
-  if (flags >= 0)
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-
-  sockaddr_in addr{};
-  addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  addr.sin_port = htons((uint16_t)port);
-  int rc = connect(fd, (sockaddr *)&addr, sizeof(addr));
-  if (rc != 0 && errno != EINPROGRESS) {
-    outErrno = errno;
-    close(fd);
-    return -1;
-  }
-  if (rc != 0) {
-    pollfd pfd{};
-    pfd.fd = fd;
-    pfd.events = POLLOUT;
-    int pr = poll(&pfd, 1, timeoutMs);
-    if (pr <= 0) {
-      outErrno = (pr == 0) ? ETIMEDOUT : errno;
-      close(fd);
-      return -1;
-    }
-    int soErr = 0;
-    socklen_t len = sizeof(soErr);
-    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &soErr, &len) != 0 || soErr != 0) {
-      outErrno = soErr ? soErr : errno;
-      close(fd);
-      return -1;
-    }
-  }
-  if (flags >= 0)
-    fcntl(fd, F_SETFL, flags);
-  timeval tv{};
-  tv.tv_sec = 20;
-  setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-  setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-#ifdef SO_NOSIGPIPE
-  int one = 1;
-  setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
-#endif
-  outErrno = 0;
-  return fd;
-}
-
-bool sendAll(int fd, const char *data, size_t len) {
-  size_t off = 0;
-  while (off < len) {
-    ssize_t n = send(fd, data + off, len - off, 0);
-    if (n <= 0)
-      return false;
-    off += (size_t)n;
-  }
-  return true;
-}
-
-bool postLocalRpiInstall(int port, const std::string &serveUrl,
-                         bool &unreachable, int &httpStatus, std::string &body,
-                         std::string &err) {
-  unreachable = false;
-  httpStatus = 0;
-  body.clear();
-
-  int connErr = 0;
-  int fd = connectLoopback(port, 2500, connErr);
-  if (fd < 0) {
-    unreachable = true;
-    err = "port " + std::to_string(port) + " unreachable (" +
-          std::string(std::strerror(connErr)) + ")";
-    return false;
-  }
-
-  std::string payload =
-      "{\"type\":\"direct\",\"packages\":[\"" + jsonEscape(serveUrl) + "\"]}";
-  std::string req = "POST /api/install HTTP/1.1\r\n"
-                    "Host: 127.0.0.1:" +
-                    std::to_string(port) +
-                    "\r\n"
-                    "Content-Type: application/json\r\n"
-                    "Content-Length: " +
-                    std::to_string(payload.size()) +
-                    "\r\n"
-                    "Connection: close\r\n\r\n" +
-                    payload;
-  if (!sendAll(fd, req.data(), req.size())) {
-    close(fd);
-    err = "failed to send /api/install RPC";
-    return false;
-  }
-
-  std::string raw;
-  char buf[4096];
-  while (raw.size() < 64 * 1024) {
-    ssize_t n = recv(fd, buf, sizeof(buf), 0);
-    if (n <= 0)
-      break;
-    raw.append(buf, (size_t)n);
-  }
-  close(fd);
-
-  if (raw.empty()) {
-    err = "empty response from /api/install";
-    return false;
-  }
-  size_t lineEnd = raw.find("\r\n");
-  std::string statusLine =
-      lineEnd == std::string::npos ? raw : raw.substr(0, lineEnd);
-  size_t sp = statusLine.find(' ');
-  if (sp != std::string::npos)
-    httpStatus = std::atoi(statusLine.c_str() + sp + 1);
-  size_t hdrEnd = raw.find("\r\n\r\n");
-  body = hdrEnd == std::string::npos ? std::string() : raw.substr(hdrEnd + 4);
-  return httpStatus > 0;
-}
-
-// Temporary loopback server used only when NetworkService is stopped while an
-// external GoldHEN RPI daemon is listening on port 12800.
-struct EphemeralPkgServer {
-  int listenFd = -1;
-  int port = 0;
-  std::string filePath;
-  pthread_t thread{};
-  bool threadStarted = false;
-  std::atomic<bool> stopFlag{false};
-  std::atomic<bool> transferDone{false};
-
-  static void *serveEntry(void *arg) {
-    auto *self = static_cast<EphemeralPkgServer *>(arg);
-    struct stat st{};
-    if (Compat::stat(self->filePath.c_str(), &st) != 0 || st.st_size <= 0)
-      return nullptr;
-    const uint64_t totalSize = (uint64_t)st.st_size;
-
-    uint64_t lastHitMs = 0;
-    uint64_t startMs = 0;
-    auto nowMs = []() -> uint64_t {
-      timespec ts{};
-      clock_gettime(CLOCK_MONOTONIC, &ts);
-      return (uint64_t)ts.tv_sec * 1000u + (uint64_t)(ts.tv_nsec / 1000000u);
-    };
-    startMs = nowMs();
-    lastHitMs = startMs;
-
-    while (!self->stopFlag.load()) {
-      uint64_t now = nowMs();
-      if (now - startMs > 90000u || now - lastHitMs > 15000u)
-        break;
-      pollfd pfd{};
-      pfd.fd = self->listenFd;
-      pfd.events = POLLIN;
-      if (poll(&pfd, 1, 200) <= 0 || !(pfd.revents & POLLIN))
-        continue;
-      int cfd = accept(self->listenFd, nullptr, nullptr);
-      if (cfd < 0)
-        continue;
-      lastHitMs = nowMs();
-
-      timeval tv{};
-      tv.tv_sec = 10;
-      setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-      setsockopt(cfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-#ifdef SO_NOSIGPIPE
-      int one = 1;
-      setsockopt(cfd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
-#endif
-      std::string req;
-      char hbuf[1024];
-      while (req.size() < 8192 && req.find("\r\n\r\n") == std::string::npos) {
-        ssize_t n = recv(cfd, hbuf, sizeof(hbuf), 0);
-        if (n <= 0)
-          break;
-        req.append(hbuf, (size_t)n);
-      }
-      bool headOnly = req.rfind("HEAD ", 0) == 0;
-      std::string lowReq = lowerStr(req);
-      uint64_t start = 0, end = totalSize - 1;
-      bool partial = false;
-      size_t rp = lowReq.find("range: bytes=");
-      if (rp != std::string::npos) {
-        const char *rs = lowReq.c_str() + rp + 13;
-        char *dash = nullptr;
-        unsigned long long sVal = std::strtoull(rs, &dash, 10);
-        if (dash && *dash == '-' && sVal < totalSize) {
-          start = sVal;
-          partial = true;
-          if (std::isdigit((unsigned char)dash[1])) {
-            unsigned long long eVal = std::strtoull(dash + 1, nullptr, 10);
-            if (eVal >= start && eVal < totalSize)
-              end = eVal;
-          }
-        }
-      }
-      uint64_t len = end - start + 1;
-      char hdr[512];
-      if (partial) {
-        std::snprintf(hdr, sizeof(hdr),
-                      "HTTP/1.1 206 Partial Content\r\n"
-                      "Content-Type: application/octet-stream\r\n"
-                      "Accept-Ranges: bytes\r\n"
-                      "Content-Range: bytes %llu-%llu/%llu\r\n"
-                      "Content-Length: %llu\r\n"
-                      "Connection: close\r\n\r\n",
-                      (unsigned long long)start, (unsigned long long)end,
-                      (unsigned long long)totalSize, (unsigned long long)len);
-      } else {
-        std::snprintf(hdr, sizeof(hdr),
-                      "HTTP/1.1 200 OK\r\n"
-                      "Content-Type: application/octet-stream\r\n"
-                      "Accept-Ranges: bytes\r\n"
-                      "Content-Length: %llu\r\n"
-                      "Connection: close\r\n\r\n",
-                      (unsigned long long)len);
-      }
-      if (sendAll(cfd, hdr, std::strlen(hdr)) && !headOnly) {
-        FILE *f = std::fopen(self->filePath.c_str(), "rb");
-        if (f) {
-          fseeko(f, (off_t)start, SEEK_SET);
-          std::vector<char> chunk(128 * 1024);
-          uint64_t left = len;
-          while (left > 0 && !self->stopFlag.load()) {
-            size_t want = (size_t)std::min<uint64_t>(left, chunk.size());
-            size_t got = std::fread(chunk.data(), 1, want, f);
-            if (got == 0 || !sendAll(cfd, chunk.data(), got))
-              break;
-            left -= got;
-            lastHitMs = nowMs();
-          }
-          if (!partial && left == 0 && len == totalSize)
-            self->transferDone = true;
-          std::fclose(f);
-        }
-      }
-      close(cfd);
-    }
-    return nullptr;
-  }
-
-  bool start(const std::string &path) {
-    filePath = path;
-    listenFd = socket(AF_INET, SOCK_STREAM, 0);
-    if (listenFd < 0)
-      return false;
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    addr.sin_port = 0;
-    if (bind(listenFd, (sockaddr *)&addr, sizeof(addr)) != 0 ||
-        listen(listenFd, 4) != 0) {
-      close(listenFd);
-      listenFd = -1;
-      return false;
-    }
-    socklen_t alen = sizeof(addr);
-    if (getsockname(listenFd, (sockaddr *)&addr, &alen) != 0) {
-      close(listenFd);
-      listenFd = -1;
-      return false;
-    }
-    port = ntohs(addr.sin_port);
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setstacksize(&attr, 256 * 1024);
-    if (pthread_create(&thread, &attr, &EphemeralPkgServer::serveEntry, this) !=
-        0) {
-      pthread_attr_destroy(&attr);
-      close(listenFd);
-      listenFd = -1;
-      return false;
-    }
-    pthread_attr_destroy(&attr);
-    threadStarted = true;
-    return true;
-  }
-
-  void keepAliveBriefly(int seconds) {
-    for (int i = 0;
-         i < seconds * 10 && !stopFlag.load() && !transferDone.load(); ++i)
-      usleep(100 * 1000);
-  }
-
-  void stop() {
-    stopFlag = true;
-    if (threadStarted) {
-      pthread_join(thread, nullptr);
-      threadStarted = false;
-    }
-    if (listenFd >= 0) {
-      close(listenFd);
-      listenFd = -1;
-    }
-  }
-};
-
 } // namespace
 
 SelfUpdater &SelfUpdater::instance() {
@@ -887,7 +504,7 @@ void SelfUpdater::setProgress(State st, const std::string &msg,
   std::lock_guard<std::mutex> lk(g_mutex);
   g_snap.state = st;
   g_snap.busy = (st == State::Checking || st == State::Downloading ||
-                 st == State::Verifying || st == State::Installing);
+                 st == State::Verifying);
   g_snap.message = msg;
   if (dlBytes > 0)
     g_snap.bytesDownloaded = dlBytes;
@@ -921,9 +538,7 @@ void SelfUpdater::startAutoCheck() {
 
 bool SelfUpdater::startCheck() { return launch(Action::ManualCheck); }
 
-bool SelfUpdater::startUpdate() { return launch(Action::DownloadAndInstall); }
-
-bool SelfUpdater::startDirectInstall() { return launch(Action::DirectInstall); }
+bool SelfUpdater::startUpdate() { return launch(Action::Download); }
 
 bool SelfUpdater::launch(Action action) {
   if (g_busy.exchange(true))
@@ -948,14 +563,14 @@ void *SelfUpdater::threadEntry(void *arg) {
   auto *a = static_cast<ThreadArgs *>(arg);
   try {
     Action act = (Action)a->action;
-    if (act == Action::QuietCheck)
+    if (act == Action::QuietCheck) {
+      UpdateCleanup::removeInstalledPackages(kPkgSaveDir, APP_VERSION, APP_TITLE_ID);
       a->self->runCheck(true);
+    }
     else if (act == Action::ManualCheck)
       a->self->runCheck(false);
-    else if (act == Action::DownloadAndInstall)
+    else if (act == Action::Download)
       a->self->runUpdate();
-    else if (act == Action::DirectInstall)
-      a->self->runDirectInstall();
   } catch (const std::exception &e) {
     a->self->finishEvent(State::Failed,
                          std::string("Updater error: ") + e.what(), true);
@@ -1146,254 +761,16 @@ void SelfUpdater::runUpdate() {
     }
   }
 
-  installVerifiedPkg(rel, finalPath);
+  finishEvent(State::ReadyToInstall, manualInstallInstructions(finalPath),
+              false, finalPath);
 }
 
-void SelfUpdater::runDirectInstall() {
-  ReleaseInfo rel;
-  std::string pkgPath;
-  {
-    std::lock_guard<std::mutex> lk(g_mutex);
-    rel = g_snap.release;
-    pkgPath = g_snap.savedPkgPath;
-  }
-  if (pkgPath.empty()) {
-    finishEvent(State::Failed, "No verified update package saved", true);
-    return;
-  }
-  struct stat st{};
-  if (Compat::stat(pkgPath.c_str(), &st) != 0 || st.st_size <= 0) {
-    finishEvent(State::Failed, "Saved package missing: " + pkgPath, true);
-    return;
-  }
-  if (!rel.sha256.empty()) {
-    setProgress(State::Verifying, "Re-verifying SHA-256...",
-                (uint64_t)st.st_size, (uint64_t)st.st_size);
-    std::string actual, err;
-    if (!sha256File(pkgPath, actual, err) || actual != rel.sha256) {
-      finishEvent(State::Failed, "Saved package failed SHA-256 verification",
-                  true);
-      return;
-    }
-  }
-  const Platform::AppInstApi *ai = Platform::appInst();
-  if (!ai || !ai->installPkg) {
-    finishEvent(State::FallbackNotice,
-                "AppInstUtil unavailable. Install " + pkgPath +
-                    " via GoldHEN Package Installer.",
-                false, pkgPath);
-    return;
-  }
-  setProgress(State::Installing, "Installing via AppInstUtil...");
-  int32_t rc = ai->installPkg(pkgPath.c_str(), nullptr);
-  if (rc == 0) {
-    finishEvent(State::Installed,
-                "PS4Hub v" + rel.version +
-                    " installed! Restart PS4Hub to launch update.",
-                false, pkgPath);
-    return;
-  }
-  char codeHex[16];
-  std::snprintf(codeHex, sizeof(codeHex), "0x%08X", (unsigned)rc);
-  finishEvent(State::FallbackNotice,
-              "Live overwrite returned " + std::string(codeHex) +
-                  ". Close PS4Hub and install " + pkgPath +
-                  " via GoldHEN Package Installer.",
-              false, pkgPath);
-}
-
-// The PKG header stores the content ID in a 36-byte, zero-padded field.
-static std::string readPkgContentId(const std::string &path) {
-  FILE *f = std::fopen(path.c_str(), "rb");
-  if (!f)
-    return {};
-  uint8_t buf[0x64]{};
-  if (std::fread(buf, 1, sizeof(buf), f) != sizeof(buf)) {
-    std::fclose(f);
-    return {};
-  }
-  std::fclose(f);
-  // Verify PS4 PKG magic: 0x7F 'C' 'N' 'T'
-  if (buf[0] != 0x7F || buf[1] != 'C' || buf[2] != 'N' || buf[3] != 'T')
-    return {};
-  const auto *id = reinterpret_cast<const char *>(buf + 0x40);
-  return std::string(id, ::strnlen(id, 0x24));
-}
-
-void SelfUpdater::installVerifiedPkg(const ReleaseInfo &rel,
-                                     const std::string &pkgPath) {
-  // Primary path: use BGFT with local file path (no HTTP hop, no EXDEV).
-  // /data/pkg/... maps to /user/data/pkg/... from SceShellCore's view.
-  const Bgft::Api *bgft = Platform::bgft();
-  if (bgft && bgft->debugRegisterPkg && bgft->startTask) {
-    setProgress(State::Installing,
-                "Registering update in Downloads via BGFT...");
-
-    // Build system-visible path (/data/ -> /user/data/).
-    std::string sysPath;
-    if (pkgPath.rfind("/data/", 0) == 0)
-      sysPath = "/user" + pkgPath;
-    else
-      sysPath = pkgPath;
-
-    // Read content ID from PKG header.
-    const std::string contentId = readPkgContentId(pkgPath);
-
-    std::string displayName = "PS4Hub v" + rel.version + " Update";
-
-    Bgft::DownloadParam p{};
-    p.userId            = Platform::userId();
-    p.entitlementType   = 5;
-    p.id                = contentId.c_str();
-    p.contentUrl        = sysPath.c_str();
-    p.contentExUrl      = "";
-    p.contentName       = displayName.c_str();
-    p.iconPath          = "";
-    p.skuId             = "";
-    p.option            = Bgft::kOptDisableCdnQueryParam;
-    p.playgoScenarioId  = "0";
-    p.releaseDate       = "";
-    p.packageType       = "PS4GD";
-    p.packageSubType    = "";
-    p.packageSize       = rel.sizeBytes;
-
-    int32_t taskId = Bgft::kInvalidTask;
-    int32_t rc = bgft->debugRegisterPkg(&p, &taskId);
-
-    // 0x80990088 = already installed/queued, 0x80990086 = already downloading:
-    // find the existing task, stop it, unregister, then retry once.
-    if ((rc == Bgft::kErrAlreadyInstalled || rc == Bgft::kErrAlreadyDownloading) &&
-        bgft->findTaskByContentId && bgft->stopTask && bgft->unregisterTask &&
-        !contentId.empty()) {
-      int32_t oldTask = Bgft::kInvalidTask;
-      if (bgft->findTaskByContentId(contentId.c_str(), 0, &oldTask) == 0 &&
-          oldTask != Bgft::kInvalidTask) {
-        bgft->stopTask(oldTask);
-        if (bgft->unregisterTask(oldTask) == 0) {
-          taskId = Bgft::kInvalidTask;
-          rc = bgft->debugRegisterPkg(&p, &taskId);
-        }
-      }
-    }
-
-    if (rc == 0 && taskId != Bgft::kInvalidTask) {
-      rc = bgft->startTask(taskId);
-      if (rc == 0) {
-        finishEvent(State::Installed,
-                    "PS4Hub v" + rel.version +
-                        " queued in Downloads (SHA-256 verified). "
-                        "Exit PS4Hub to let the system apply the update.",
-                    false, pkgPath);
-        return;
-      }
-      if (bgft->unregisterTask)
-        bgft->unregisterTask(taskId);
-    }
-
-    // BGFT local-path failed; log the code and fall through to RPC / fallback.
-    char bgftHex[16];
-    if (rc == 0)
-      std::snprintf(bgftHex, sizeof(bgftHex), "no task ID");
-    else
-      std::snprintf(bgftHex, sizeof(bgftHex), "0x%08X", (unsigned)rc);
-    setProgress(State::Installing,
-                std::string("BGFT local returned ") + bgftHex +
-                    ", trying RPC fallback...");
-  }
-
-  // Secondary path: GoldHEN RPI HTTP /api/install (original behaviour).
-  setProgress(State::Installing,
-              "Sending local install RPC to 127.0.0.1:12800...");
-
-  auto &svc = NetworkService::instance();
-  bool svcRunning = svc.running();
-  std::string serveUrl;
-  std::string stagePath;
-  EphemeralPkgServer ephem;
-
-  if (svcRunning) {
-    if (stageServableFile(pkgPath, stagePath)) {
-      serveUrl = "http://127.0.0.1:" + std::to_string(svc.port()) + "/static/" +
-                 kStageName;
-    }
-  } else {
-    int probeErr = 0;
-    int probeFd = connectLoopback(kRpiPort, 1500, probeErr);
-    if (probeFd >= 0) {
-      close(probeFd);
-      if (ephem.start(pkgPath)) {
-        serveUrl =
-            "http://127.0.0.1:" + std::to_string(ephem.port) + "/" + kStageName;
-      }
-    }
-  }
-
-  bool unreachable = false;
-  int httpStatus = 0;
-  std::string rpcBody, rpcErr;
-  bool rpcContacted = false;
-  if (!serveUrl.empty()) {
-    rpcContacted = postLocalRpiInstall(kRpiPort, serveUrl, unreachable,
-                                       httpStatus, rpcBody, rpcErr);
-  } else {
-    unreachable = !svcRunning;
-  }
-
-  std::string lowBody = lowerStr(rpcBody);
-  bool rpcOk = rpcContacted && httpStatus >= 200 && httpStatus < 300 &&
-               lowBody.find("\"success\"") != std::string::npos;
-
-  if (rpcOk) {
-    if (ephem.threadStarted) {
-      ephem.keepAliveBriefly(12);
-      ephem.stop();
-    }
-    finishEvent(State::Installed,
-                "PS4Hub v" + rel.version +
-                    " SHA-256 verified & queued via :12800. "
-                    "Exit PS4Hub to apply.",
-                false, pkgPath);
-    return;
-  }
-
-  if (ephem.threadStarted)
-    ephem.stop();
-
-  if (unreachable && !svcRunning) {
-    finishEvent(State::FallbackNotice,
-                "GoldHEN RPI (:12800) is disabled. SHA-256 verified PKG saved "
-                "to " +
-                    pkgPath + " - install via GoldHEN Package Installer.",
-                false, pkgPath);
-    return;
-  }
-
-  // Last-resort: sceAppInstUtilAppInstallPkg.
-  const Platform::AppInstApi *ai = Platform::appInst();
-  if (ai && ai->installPkg) {
-    setProgress(State::Installing, "Installing via AppInstUtil...");
-    int32_t rc2 = ai->installPkg(pkgPath.c_str(), nullptr);
-    if (rc2 == 0) {
-      finishEvent(State::Installed,
-                  "PS4Hub v" + rel.version +
-                      " SHA-256 verified & installed! Restart PS4Hub.",
-                  false, pkgPath);
-      return;
-    }
-    char codeHex[16];
-    std::snprintf(codeHex, sizeof(codeHex), "0x%08X", (unsigned)rc2);
-    finishEvent(State::FallbackNotice,
-                "SHA-256 verified PKG saved to " + pkgPath +
-                    ". Close PS4Hub and install via GoldHEN Package Installer "
-                    "(AppInst " +
-                    std::string(codeHex) + ").",
-                false, pkgPath);
-    return;
-  }
-
-  std::string reason = rpcContacted ? "RPC returned failure" : rpcErr;
-  finishEvent(State::FallbackNotice,
-              "SHA-256 verified PKG saved to " + pkgPath + " (" + reason +
-                  ") - install via GoldHEN Package Installer.",
-              false, pkgPath);
+std::string SelfUpdater::manualInstallInstructions(const std::string &path) {
+  return "Download verified. Manual installation is required.\n\n"
+         "1. Close PS4Hub and open GoldHEN > Debug Settings > Package Installer.\n"
+         "2. Select and install " + path + ".\n"
+         "3. If the PKG is missing, check GoldHEN Package Source and select "
+         "the option that includes all drives.\n\n"
+         "Launch the updated PS4Hub afterwards; it will remove its downloaded "
+         "PKG and older downloaded PS4Hub updates automatically.";
 }

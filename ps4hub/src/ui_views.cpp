@@ -391,25 +391,25 @@ std::vector<UiRoot::Entry> UiRoot::systemEntries() const {
                      ? "Downloading PS4Hub update..."
                  : up.state == SelfUpdater::State::Verifying
                      ? "Verifying SHA-256 checksum..."
-                 : up.state == SelfUpdater::State::Installing
-                     ? "Installing PS4Hub update..."
                      : "Checking for PS4Hub updates...";
       ue.detail = up.message;
       ue.enabled = false;
     } else if (up.updateAvailable) {
-      ue.label = "Update PS4Hub to v" + up.release.version;
+      ue.label = "Download PS4Hub v" + up.release.version;
       ue.detail = !up.message.empty()
                       ? up.message
                       : "Downloads to /data/pkg/, verifies SHA-256, and "
-                        "installs via 127.0.0.1:12800";
+                        "requires manual installation in GoldHEN";
       ue.action = [self] {
         if (!SelfUpdater::instance().startUpdate())
           self->ctl_.notify("Updater is already busy", true);
       };
       ue.confirm =
-          "Update PS4Hub to v" + up.release.version +
+          "Download PS4Hub v" + up.release.version +
           "?\nDownloads ps4hub.pkg to /data/pkg/, verifies SHA-256, "
-          "and sends install RPC to http://127.0.0.1:12800/api/install.";
+          "and shows manual installation instructions for GoldHEN. "
+          "If the file is missing in Package Installer, set Package Source "
+          "to include all drives.";
     } else {
       ue.label = "Check for PS4Hub updates";
       ue.detail =
@@ -423,17 +423,14 @@ std::vector<UiRoot::Entry> UiRoot::systemEntries() const {
     }
     v.push_back(std::move(ue));
     if (!up.busy && !up.savedPkgPath.empty()) {
-      v.push_back(
-          {"Install verified PKG directly",
-           up.savedPkgPath + " (AppInstUtil fallback)",
-           [self] {
-             if (!SelfUpdater::instance().startDirectInstall())
-               self->ctl_.notify("Updater is already busy", true);
-           },
-           false, true,
-           "Install saved verified package?\nRuns SceAppInstUtilAppInstallPkg "
-           "on " +
-               up.savedPkgPath + "."});
+      const std::string instructions =
+          "Manual update installation\n" +
+          SelfUpdater::manualInstallInstructions(up.savedPkgPath);
+      v.push_back({"How to install the downloaded update",
+                   up.savedPkgPath + " - install manually in GoldHEN",
+                   [self, instructions] {
+                     self->openConfirm(instructions, [] {});
+                   }});
     }
   }
   const size_t firstHomeIdx = v.size();
@@ -1100,8 +1097,13 @@ bool UiRoot::draw(float dt) {
     auto up = SelfUpdater::instance().snapshot();
     if (up.eventSerial != updaterSerial_) {
       updaterSerial_ = up.eventSerial;
-      ctl_.notify(up.eventMessage, up.eventError);
-      Platform::notify(up.eventMessage);
+      if (up.state == SelfUpdater::State::ReadyToInstall) {
+        openConfirm("Manual update installation\n" + up.eventMessage, [] {});
+        Platform::notify("PS4Hub update downloaded. Install it manually in GoldHEN.");
+      } else {
+        ctl_.notify(up.eventMessage, up.eventError);
+        Platform::notify(up.eventMessage);
+      }
     }
     if (up.busy)
       Anim::activeFlag() = true;
@@ -2780,24 +2782,44 @@ void UiRoot::drawConfirm(ImDrawList *dl, float dt) {
                        IM_COL32(0, 4, 14, (int)(160 * e)));
 
   Anim::VtxScope scope(dl);
-  const float w = 880.0f, h = 330.0f;
-  ImVec2 a((SW - w) * 0.5f, (SH - h) * 0.5f), b(a.x + w, a.y + h);
-  Theme::FillRoundRect(dl, a, b, IM_COL32(16, 28, 54, 246), 26.0f);
-  dl->AddRect(a, b, Theme::glassEdge(), 26.0f, 0, 1.5f);
-
   std::string title = confirmText_, body;
   size_t nl = confirmText_.find('\n');
   if (nl != std::string::npos) {
     title = confirmText_.substr(0, nl);
     body = confirmText_.substr(nl + 1);
   }
+  const bool manualInfo = title == "Manual update installation";
+  const float w = manualInfo ? 1040.0f : 880.0f;
+  std::vector<std::string> bodyLines;
+  if (manualInfo) {
+    size_t start = 0;
+    while (start <= body.size()) {
+      size_t end = body.find('\n', start);
+      const auto paragraph = body.substr(start, end == std::string::npos ?
+                                                std::string::npos : end - start);
+      if (paragraph.empty()) bodyLines.push_back("");
+      else {
+        auto lines = wrap(paragraph, 24.0f, w - 112.0f, 16);
+        bodyLines.insert(bodyLines.end(), lines.begin(), lines.end());
+      }
+      if (end == std::string::npos) break;
+      start = end + 1;
+    }
+  } else {
+    bodyLines = wrap(body, 24.0f, w - 112.0f, 3);
+  }
+  const float h = manualInfo ? 240.0f + 33.0f * bodyLines.size() : 330.0f;
+  ImVec2 a((SW - w) * 0.5f, (SH - h) * 0.5f), b(a.x + w, a.y + h);
+  Theme::FillRoundRect(dl, a, b, IM_COL32(16, 28, 54, 246), 26.0f);
+  dl->AddRect(a, b, Theme::glassEdge(), 26.0f, 0, 1.5f);
+
   float y = a.y + 52.0f;
   for (auto &l : wrap(title, 36.0f, w - 112.0f, 2)) {
     text(dl, a.x + 56.0f, y, 36.0f, Theme::textPrimary(), l);
     y += 46.0f;
   }
   y += 6.0f;
-  for (auto &l : wrap(body, 24.0f, w - 112.0f, 3)) {
+  for (auto &l : bodyLines) {
     text(dl, a.x + 56.0f, y, 24.0f, Theme::textMuted(), l);
     y += 33.0f;
   }
@@ -2818,8 +2840,9 @@ void UiRoot::drawConfirm(ImDrawList *dl, float dt) {
     return bw;
   };
   float right = b.x - 56.0f;
-  right -= button(right, "Cancel", Glyph::Circle) + 16.0f;
-  button(right, "OK", Glyph::Cross);
+  if (!manualInfo)
+    right -= button(right, "Cancel", Glyph::Circle) + 16.0f;
+  button(right, manualInfo ? "Close" : "OK", Glyph::Cross);
 
   float s = 0.95f + 0.05f * e;
   scope.apply(e, ImVec2(0, 0), s, ImVec2(SW * 0.5f, SH * 0.5f));
