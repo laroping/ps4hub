@@ -427,7 +427,7 @@ std::vector<UiRoot::Entry> UiRoot::systemEntries() const {
           "Manual update installation\n" +
           SelfUpdater::manualInstallInstructions(up.savedPkgPath);
       v.push_back({"How to install the downloaded update",
-                   up.savedPkgPath + " - install manually in GoldHEN",
+                   "Open installation instructions",
                    [self, instructions] {
                      self->openConfirm(instructions, [] {});
                    }});

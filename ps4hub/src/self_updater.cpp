@@ -517,7 +517,8 @@ void SelfUpdater::finishEvent(State st, const std::string &msg, bool error,
   std::lock_guard<std::mutex> lk(g_mutex);
   g_snap.state = st;
   g_snap.busy = false;
-  g_snap.message = msg;
+  // The list row is single-line; keep detailed instructions in the popup event.
+  g_snap.message = st == State::ReadyToInstall ? "Download verified. PKG ready." : msg;
   if (!savedPath.empty())
     g_snap.savedPkgPath = savedPath;
   g_snap.eventError = error;
