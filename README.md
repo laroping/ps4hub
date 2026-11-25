@@ -1,6 +1,6 @@
 # <img src="ps4hub/sce_sys/icon0.png" alt="PS4Hub" width="44" align="absmiddle" /> PS4Hub
 
-PS4Hub is an on-console utility for managing `app.db` home layouts, installing `.pkg` files directly from NTFS drives, and receiving packages via an embedded RPI server (port 12800). PS4-PS5 Package Sender is the Windows desktop companion for streaming `.pkg` files to PS4 and PS5 consoles over LAN.
+PS4Hub is an on-console PS4 utility for managing `app.db` home layouts, browsing NTFS USB drives with a built-in NTFS file explorer to install `.pkg` files directly from NTFS storage, and receiving packages via an embedded RPI server (port 12800). PS4-PS5 Package Sender is the Windows desktop companion for streaming `.pkg` files to PS4 and PS5 consoles over LAN.
 
 > [!IMPORTANT]
 > Verified on **PS4 Pro**, **Firmware 14.02** with GoldHEN.
@@ -29,7 +29,7 @@ C++17 PS4 homebrew application built with OpenOrbis, Dear ImGui, SQLite3, and `l
 - **Home Layout (`app.db`):** pin, reorder, hide or restore tiles (including `"What's New"` and `"PlayStation Store"`), save/load layout profiles, backup & restore `app.db`, and experimental `Rebuild game database (Untested)`.
 - **Title & Add-on Manager:** inspects installed Base, Patch, and DLC sizes/versions and uninstalls individual updates or DLC.
 - **Remote Package Installer (`:12800`):** LAN HTTP server compatible with flatZ RPI / PS4-PS5 Package Sender, with on-console transfer queue and pause/resume/stop controls.
-- **NTFS USB PKG Installation:** browses NTFS USB drives directly and installs `.pkg` files locally; PS4 shell exFAT mounts are read-only.
+- **NTFS USB Explorer & Direct `.pkg` Installer:** browse NTFS-formatted USB drives (HDD/SSD/flash) directly on PS4 and install `.pkg` files locally without converting to exFAT; PS4 shell exFAT mounts are read-only.
 - **App Catalog:** downloads and installs curated homebrew packages directly on the console.
 - **WebKit & Autoloader:** bundles the offline GoldHEN autoloader from [ps4webkit](https://github.com/laroping/ps4webkit) (`5.05-14.02`), adds local (`/load/`) and online (`https://laroping.github.io/ps4webkit/`) bookmarks without modifying browser name or icon, and supports `Restore Defaults`.
 - **GoldHEN Plugins & Game Patches:** installs and toggles YouTube AdBlock (+ SponsorBlock), No Share Watermark, and GoldHEN XML game patches.
